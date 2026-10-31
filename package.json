@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx database/seed.ts"
   },
   "dependencies": {
     "@ai-sdk/groq": "^4.0.73",
