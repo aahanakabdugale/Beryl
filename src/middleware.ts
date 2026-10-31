@@ -24,8 +24,10 @@ export async function middleware(request: NextRequest) {
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 
+  const isDemo = request.cookies.get("beryl_demo_mode")?.value === "true";
+
   // If user is not authenticated and trying to access a protected dashboard route
-  if (!user && isProtectedPath) {
+  if (!user && !isDemo && isProtectedPath) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("redirectTo", pathname);
@@ -33,7 +35,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // If user is authenticated and visits login/signup, redirect to dashboard
-  if (user && isAuthPath) {
+  if ((user || isDemo) && isAuthPath) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
     redirectUrl.searchParams.delete("redirectTo");
