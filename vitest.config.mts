@@ -11,6 +11,11 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@/backend": path.resolve(__dirname, "./backend"),
+      "@/frontend": path.resolve(__dirname, "./frontend"),
+      "@/database": path.resolve(__dirname, "./database"),
+      "@/lib": path.resolve(__dirname, "./backend"),
+      "@/components": path.resolve(__dirname, "./frontend/components"),
     },
   },
 });
