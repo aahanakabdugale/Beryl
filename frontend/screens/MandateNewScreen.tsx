@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { useViewMode } from "@/components/view-mode-context";
 import { toast } from "sonner";
 
 const DEFAULT_CATEGORIES = [
@@ -33,11 +34,12 @@ const DEFAULT_CATEGORIES = [
 
 export default function MandateSetupPage() {
   const router = useRouter();
+  const { isDeveloper } = useViewMode();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
   // Form State
-  const [name, setName] = useState("Research & Supplies Budget");
+  const [name, setName] = useState(isDeveloper ? "Research & Supplies Budget" : "My Shopping Allowance");
   const [totalBudgetDollars, setTotalBudgetDollars] = useState("100.00");
   const [perPurchaseLimitDollars, setPerPurchaseLimitDollars] = useState("30.00");
   const [askAboveDollars, setAskAboveDollars] = useState("20.00");
@@ -85,7 +87,7 @@ export default function MandateSetupPage() {
       });
 
       if (res.ok) {
-        toast.success("Mandate deployed successfully!");
+        toast.success(isDeveloper ? "Mandate deployed successfully!" : "Shopping allowance saved!");
         router.push("/dashboard");
       } else {
         const data = await res.json();
@@ -104,10 +106,12 @@ export default function MandateSetupPage() {
       <div className="flex items-center justify-between pb-2 border-b border-zinc-200/80 dark:border-[#1A332B]">
         <div>
           <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Create Policy Mandate
+            {isDeveloper ? "Create Policy Mandate & Guardrail" : "Set Your Shopping Allowance & Limits"}
           </h1>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Program the boundaries for your AI shopping agent
+            {isDeveloper
+              ? "Program the boundaries and deterministic constraints for your autonomous agent"
+              : "Choose how much your agent can spend and when it needs to ask your permission."}
           </p>
         </div>
 
@@ -128,15 +132,15 @@ export default function MandateSetupPage() {
                   {step}
                 </span>
                 <CardTitle className="font-heading text-lg font-bold">
-                  {step === 1 && "Budget & Identity"}
-                  {step === 2 && "Purchase Limits & Escalation"}
-                  {step === 3 && "Categories & Merchants"}
+                  {step === 1 && (isDeveloper ? "Budget & Identity" : "Shopping Budget & Name")}
+                  {step === 2 && (isDeveloper ? "Purchase Limits & Escalation" : "Item Limits & Review Rules")}
+                  {step === 3 && (isDeveloper ? "Categories & Merchants" : "Allowed Stores & Categories")}
                 </CardTitle>
               </div>
               <CardDescription className="text-xs text-zinc-500">
-                {step === 1 && "Name the mandate and set the hard total budget ceiling."}
-                {step === 2 && "Control max single item spending and human review trigger threshold."}
-                {step === 3 && "Specify approved product taxonomy and trusted seller domains."}
+                {step === 1 && (isDeveloper ? "Name the mandate and set the hard total budget ceiling." : "Name your allowance and set your total shopping budget.")}
+                {step === 2 && (isDeveloper ? "Control max single item spending and human review trigger threshold." : "Set maximum price for any single item and when to ask for your approval.")}
+                {step === 3 && (isDeveloper ? "Specify approved product taxonomy and trusted seller domains." : "Select which product categories and stores your agent is allowed to shop from.")}
               </CardDescription>
             </CardHeader>
 
@@ -145,17 +149,21 @@ export default function MandateSetupPage() {
               {step === 1 && (
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Mandate Name</Label>
+                    <Label className="text-xs font-semibold">
+                      {isDeveloper ? "Mandate Name" : "Allowance Label"}
+                    </Label>
                     <Input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Desk Setup Budget"
+                      placeholder="e.g. Shopping Allowance"
                       className="text-xs"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Total Budget (USD)</Label>
+                    <Label className="text-xs font-semibold">
+                      {isDeveloper ? "Total Budget Cap (USD)" : "Total Shopping Allowance (USD)"}
+                    </Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
                       <Input
@@ -167,13 +175,17 @@ export default function MandateSetupPage() {
                         className="pl-9 text-xs"
                       />
                     </div>
-                    <span className="text-[11px] text-zinc-400 font-mono">
-                      Stored in policy engine as {totalBudgetCents} integer cents
-                    </span>
+                    {isDeveloper && (
+                      <span className="text-[11px] text-zinc-400 font-mono">
+                        Stored in policy engine as {totalBudgetCents} integer cents
+                      </span>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Duration / Expiration</Label>
+                    <Label className="text-xs font-semibold">
+                      {isDeveloper ? "Duration / Expiration" : "Valid For"}
+                    </Label>
                     <div className="grid grid-cols-3 gap-2">
                       {["3", "7", "30"].map((d) => (
                         <Button
@@ -199,7 +211,9 @@ export default function MandateSetupPage() {
               {step === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Max Single Item Limit (USD)</Label>
+                    <Label className="text-xs font-semibold">
+                      {isDeveloper ? "Per-Purchase Limit (USD)" : "Max Single Item Price (USD)"}
+                    </Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
                       <Input
@@ -212,12 +226,16 @@ export default function MandateSetupPage() {
                       />
                     </div>
                     <span className="text-[11px] text-zinc-400">
-                      Purchases above this amount are strictly <strong className="text-rose-500">BLOCKED</strong>.
+                      {isDeveloper
+                        ? <span>Purchases above this are strictly <strong className="text-rose-500">BLOCKED</strong>.</span>
+                        : "Any item costing more than this will not be purchased."}
                     </span>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Human Escalation Threshold (USD)</Label>
+                    <Label className="text-xs font-semibold">
+                      {isDeveloper ? "Escalation Threshold (USD) — Ask Above" : "Ask Me Before Buying If Over (USD)"}
+                    </Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-amber-500" />
                       <Input
@@ -230,7 +248,9 @@ export default function MandateSetupPage() {
                       />
                     </div>
                     <span className="text-[11px] text-zinc-400">
-                      Purchases exceeding this require your approval in the <strong className="text-amber-500">Approval Sheet</strong> before execution.
+                      {isDeveloper
+                        ? "Requests in this range trigger the NEEDS_APPROVAL state for human authorization."
+                        : "Orders above this amount will pause and ask for your 1-click approval."}
                     </span>
                   </div>
                 </div>
