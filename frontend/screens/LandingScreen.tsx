@@ -23,7 +23,8 @@ import {
   Code2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { BerylLogo, BerylGem } from "@/components/beryl-gem";
+import { BerylLogo } from "@/components/beryl-logo";
+import { MandateZonesInfographic } from "@/components/mandate-zones";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ModeSwitcher } from "@/components/mode-switcher";
 import { useViewMode } from "@/components/view-mode-context";
@@ -72,47 +73,23 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F7F5] dark:bg-[#07100D] text-[#0B1914] dark:text-[#EDF5F2] selection:bg-[#3EE0A8]/30">
+    <div className="min-h-screen bg-[#F3F7F5] dark:bg-[#07100D] bg-grid-faint text-[#0B1914] dark:text-[#EDF5F2] selection:bg-[#3EE0A8]/30">
       {/* Top Navigation */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-[#F3F7F5]/85 dark:bg-[#07100D]/85 border-b border-[#0B7A5A]/10 dark:border-[#3EE0A8]/10 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 sm:gap-6">
-            <Link href="/" className="cursor-pointer">
-              <BerylLogo size={28} />
+          <div className="flex items-center">
+            <Link href="/" className="cursor-pointer flex items-center gap-2.5">
+              <BerylLogo size={32} />
+              <span className="font-heading text-xl tracking-wider font-extrabold text-[#0B1914] dark:text-[#EDF5F2]">
+                BERYL
+              </span>
             </Link>
-            {/* Mode Switcher prominently placed in Top Bar */}
-            <ModeSwitcher />
           </div>
 
-          {/* Navigation Links Segregated by Persona */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-600 dark:text-zinc-300">
-            <a href="#how-it-works" className="hover:text-[#0B7A5A] dark:hover:text-[#3EE0A8] transition-colors">
-              How it works
-            </a>
-
-            {isDeveloper ? (
-              <>
-                <a href="#policy-engine" className="hover:text-[#0B7A5A] dark:hover:text-[#3EE0A8] transition-colors">
-                  Policy engine
-                </a>
-                <a href="#attack-lab" className="hover:text-[#0B7A5A] dark:hover:text-[#3EE0A8] transition-colors">
-                  Attack lab
-                </a>
-                <Link href="/dashboard/audit" className="hover:text-[#0B7A5A] dark:hover:text-[#3EE0A8] transition-colors font-mono">
-                  Audit log
-                </Link>
-              </>
-            ) : (
-              <>
-                <a href="#protection" className="hover:text-[#0B7A5A] dark:hover:text-[#3EE0A8] transition-colors">
-                  Protection
-                </a>
-                <Link href="/dashboard/agent" className="hover:text-[#0B7A5A] dark:hover:text-[#3EE0A8] transition-colors">
-                  Shop with AI
-                </Link>
-              </>
-            )}
-          </nav>
+          {/* Mode Switcher: 2 options (Consumer App & Developer Lab) */}
+          <div className="flex items-center justify-center">
+            <ModeSwitcher />
+          </div>
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -132,18 +109,12 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section with Faint Grid */}
-      <section className="relative pt-12 pb-20 overflow-hidden bg-grid-faint">
+      {/* Hero Section */}
+      <section className="relative pt-12 pb-20 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Left Column: Headlines & CTA */}
             <div className="lg:col-span-7 space-y-6">
-              {/* Hackathon Badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/70 dark:bg-emerald-950/60 border border-emerald-500/20 text-xs font-semibold text-[#0B7A5A] dark:text-[#3EE0A8]">
-                <span className="h-2 w-2 rounded-full bg-[#0B7A5A] dark:bg-[#3EE0A8] animate-pulse" />
-                Built for the PayPal AI Hackathon
-              </div>
-
               {/* Main Headline */}
               <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#0B1914] dark:text-[#EDF5F2] leading-[1.1]">
                 Give your AI agent a wallet.{" "}
@@ -168,15 +139,6 @@ export default function LandingPage() {
                   <span>{isDeveloper ? "Launch Developer Sandbox" : "Try the live demo"}</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => setVideoModalOpen(true)}
-                  className="rounded-full px-6 h-12 border-zinc-300 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/60 hover:bg-white dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 gap-2 cursor-pointer"
-                >
-                  <Play className="h-4 w-4 fill-current text-[#0B7A5A] dark:text-[#3EE0A8]" />
-                  <span>Watch 1m demo</span>
-                </Button>
               </div>
 
               {/* Three Trust Checks */}
@@ -196,156 +158,42 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Right Column: Hero Architecture Diagram with 6-Facet Gem */}
-            <div className="lg:col-span-5 relative flex items-center justify-center py-6">
-              <div className="w-full max-w-lg relative">
-                {/* SVG Connecting Dashed Lines */}
-                <svg
-                  className="absolute inset-0 w-full h-full pointer-events-none z-0"
-                  viewBox="0 0 450 320"
-                  fill="none"
-                  preserveAspectRatio="none"
-                >
-                  {/* Left Requests to Gem (x: 225, y: 160) */}
-                  <path
-                    d="M 120 50 C 180 50, 180 160, 225 160"
-                    stroke="#94A3B8"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                    className="opacity-60"
-                  />
-                  <path
-                    d="M 120 160 C 180 160, 180 160, 225 160"
-                    stroke="#94A3B8"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                    className="opacity-60"
-                  />
-                  <path
-                    d="M 120 270 C 180 270, 180 160, 225 160"
-                    stroke="#94A3B8"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                    className="opacity-60"
-                  />
-
-                  {/* Gem to Right Decisions */}
-                  <path
-                    d="M 225 160 C 270 160, 270 50, 330 50"
-                    stroke="#10B981"
-                    strokeWidth="2"
-                    strokeDasharray="4 4"
-                  />
-                  <path
-                    d="M 225 160 C 270 160, 270 160, 330 160"
-                    stroke="#F59E0B"
-                    strokeWidth="2"
-                    strokeDasharray="4 4"
-                  />
-                  <path
-                    d="M 225 160 C 270 160, 270 270, 330 270"
-                    stroke="#EF4444"
-                    strokeWidth="2"
-                    strokeDasharray="4 4"
-                  />
-                </svg>
-
-                <div className="grid grid-cols-3 items-center gap-2 relative z-10">
-                  {/* Left Column: 3 Request Cards */}
-                  <div className="space-y-4">
-                    {/* Request 1 */}
-                    <div className="bg-white/95 dark:bg-[#0D1C17] border border-zinc-200/80 dark:border-[#1A332B] rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">REQUEST</div>
-                      <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">
-                        Phone stand, $14.00
-                      </div>
-                    </div>
-
-                    {/* Request 2 */}
-                    <div className="bg-white/95 dark:bg-[#0D1C17] border border-zinc-200/80 dark:border-[#1A332B] rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">REQUEST</div>
-                      <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">
-                        Keyboard, $45.00
-                      </div>
-                    </div>
-
-                    {/* Request 3 */}
-                    <div className="bg-white/95 dark:bg-[#0D1C17] border border-zinc-200/80 dark:border-[#1A332B] rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">REQUEST</div>
-                      <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">
-                        10 x Gift card, $500.00
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Center Column: The Beryl Gem */}
-                  <div className="flex flex-col items-center justify-center">
-                    <BerylGem size={130} interactive={true} />
-                  </div>
-
-                  {/* Right Column: 3 Decision Cards */}
-                  <div className="space-y-4">
-                    {/* Decision 1: APPROVED */}
-                    <div className="bg-emerald-50/90 dark:bg-[#0B2E23]/80 border border-emerald-500/30 rounded-xl p-3 shadow-sm">
-                      <div className="text-[11px] font-bold tracking-wide text-emerald-700 dark:text-[#3EE0A8]">
-                        APPROVED
-                      </div>
-                      <div className="text-[11px] text-emerald-800/80 dark:text-emerald-200 mt-0.5">
-                        Paid in PayPal sandbox
-                      </div>
-                    </div>
-
-                    {/* Decision 2: ASK YOU FIRST */}
-                    <div className="bg-amber-50/90 dark:bg-[#2C2108]/80 border border-amber-500/30 rounded-xl p-3 shadow-sm">
-                      <div className="text-[11px] font-bold tracking-wide text-amber-700 dark:text-amber-400">
-                        ASK YOU FIRST
-                      </div>
-                      <div className="text-[11px] text-amber-800/80 dark:text-amber-200 mt-0.5">
-                        Above your $30 limit
-                      </div>
-                    </div>
-
-                    {/* Decision 3: BLOCKED */}
-                    <div className="bg-rose-50/90 dark:bg-[#2B0E12]/80 border border-rose-500/30 rounded-xl p-3 shadow-sm">
-                      <div className="text-[11px] font-bold tracking-wide text-rose-700 dark:text-rose-400">
-                        BLOCKED
-                      </div>
-                      <div className="text-[11px] text-rose-800/80 dark:text-rose-200 mt-0.5">
-                        SUSPICIOUS, injection
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            {/* Right Column: Mandate Zones Infographic */}
+            <div className="lg:col-span-5 relative flex items-center justify-center py-4">
+              <div className="w-full max-w-xl relative">
+                <MandateZonesInfographic />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Live Log Strip */}
-      <section className="border-y border-zinc-200/80 dark:border-[#1A332B] bg-white/70 dark:bg-[#0A1612]/70 py-3 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 shrink-0 font-semibold">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Live Audit Strip
+      {/* Live Log Strip (Visible in Developer Lab Mode only) */}
+      {isDeveloper && (
+        <section className="border-y border-[#0B7A5A]/10 dark:border-[#3EE0A8]/10 py-3 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 shrink-0 font-semibold">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Live Audit Strip
+            </div>
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap">
+              {RECENT_DECISIONS_STRIP.map((entry, idx) => (
+                <div
+                  key={idx}
+                  className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-md border text-[11px] font-mono ${entry.color}`}
+                >
+                  <span className="font-bold opacity-75">{entry.id}</span>
+                  <span>{entry.item}</span>
+                  <span className="font-semibold">{entry.amount}</span>
+                  <span className="px-1.5 py-0.2 rounded font-bold uppercase text-[10px]">
+                    {entry.decision}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap">
-            {RECENT_DECISIONS_STRIP.map((entry, idx) => (
-              <div
-                key={idx}
-                className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-md border text-[11px] font-mono ${entry.color}`}
-              >
-                <span className="font-bold opacity-75">{entry.id}</span>
-                <span>{entry.item}</span>
-                <span className="font-semibold">{entry.amount}</span>
-                <span className="px-1.5 py-0.2 rounded font-bold uppercase text-[10px]">
-                  {entry.decision}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* How It Works: Three Cards */}
       <section id="how-it-works" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -460,7 +308,7 @@ export default function LandingPage() {
 
       {/* Consumer Protection Section (Visible in Consumer App Mode) */}
       {!isDeveloper && (
-        <section id="protection" className="py-24 border-t border-zinc-200/80 dark:border-[#1A332B] bg-white/50 dark:bg-[#0A1612]/50">
+        <section id="protection" className="py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center sm:text-left mb-12">
               <span className="font-mono text-xs font-semibold text-[#0B7A5A] dark:text-[#3EE0A8] uppercase tracking-wider">
@@ -513,7 +361,7 @@ export default function LandingPage() {
       {isDeveloper && (
         <>
           {/* Policy Engine: 12 Checks Numbered Ladder */}
-          <section id="policy-engine" className="py-24 border-t border-zinc-200/80 dark:border-[#1A332B] bg-white/50 dark:bg-[#0A1612]/50">
+          <section id="policy-engine" className="py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             {/* Left Column: Ladder Intro */}
@@ -653,42 +501,79 @@ export default function LandingPage() {
       )}
 
       {/* Metrics Bar */}
-      <section className="py-16 border-t border-zinc-200/80 dark:border-[#1A332B] bg-white/70 dark:bg-[#07100D]/80">
+      <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center sm:text-left">
-            <div>
-              <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
-                12
+          {isDeveloper ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center sm:text-left">
+              <div>
+                <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
+                  12
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
+                  policy checks per payment
+                </div>
               </div>
-              <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
-                policy checks per payment
+              <div>
+                <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
+                  9
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
+                  attack scenarios defeated
+                </div>
+              </div>
+              <div>
+                <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
+                  0
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
+                  path from agent to PayPal
+                </div>
+              </div>
+              <div>
+                <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
+                  100%
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
+                  of decisions logged
+                </div>
               </div>
             </div>
-            <div>
-              <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
-                9
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center sm:text-left">
+              <div>
+                <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
+                  100%
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
+                  verified store protection
+                </div>
               </div>
-              <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
-                attack scenarios defeated
+              <div>
+                <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
+                  $0
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
+                  unauthorized spending risk
+                </div>
+              </div>
+              <div>
+                <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
+                  1-Click
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
+                  instant approval for big buys
+                </div>
+              </div>
+              <div>
+                <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
+                  Instant
+                </div>
+                <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
+                  PayPal sandbox payments
+                </div>
               </div>
             </div>
-            <div>
-              <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
-                0
-              </div>
-              <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
-                path from agent to PayPal
-              </div>
-            </div>
-            <div>
-              <div className="font-heading text-4xl sm:text-5xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8]">
-                100%
-              </div>
-              <div className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
-                of decisions logged
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -697,49 +582,57 @@ export default function LandingPage() {
         <div className="bg-[#0B7A5A] text-white rounded-3xl p-8 sm:p-12 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
           <div>
             <h3 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight">
-              Let agents spend. Stay in control.
+              {isDeveloper ? "Let agents spend. Stay in control." : "Shop effortlessly. Stay completely protected."}
             </h3>
             <p className="text-emerald-100 text-sm mt-1 max-w-xl">
-              Set up your first autonomous shopping mandate in 30 seconds.
+              {isDeveloper
+                ? "Set up your first autonomous shopping mandate in 30 seconds."
+                : "Give your AI shopping assistant a capped allowance with automated PayPal checkout."}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/dashboard">
               <Button
                 size="lg"
-                className="bg-white text-[#0B7A5A] hover:bg-zinc-100 font-semibold rounded-full px-6 h-11 shadow-sm"
+                className="bg-white text-[#0B7A5A] hover:bg-zinc-100 font-semibold rounded-full px-6 h-11 shadow-sm cursor-pointer"
               >
-                Try the live demo
+                {isDeveloper ? "Launch Developer Sandbox" : "Start Shopping with AI"}
               </Button>
             </Link>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white/40 text-white hover:bg-white/10 rounded-full px-6 h-11"
+            {isDeveloper && (
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <svg className="h-4 w-4 mr-2 fill-current" viewBox="0 0 24 24">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                </svg>
-                View on GitHub
-              </Button>
-            </a>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white/40 text-white hover:bg-white/10 rounded-full px-6 h-11 cursor-pointer"
+                >
+                  <svg className="h-4 w-4 mr-2 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                  </svg>
+                  View on GitHub
+                </Button>
+              </a>
+            )}
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200/80 dark:border-[#1A332B] py-8 bg-white/40 dark:bg-[#07100D]">
+      <footer className="py-12 border-t border-[#0B7A5A]/10 dark:border-[#3EE0A8]/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500 dark:text-zinc-400">
           <div className="flex items-center gap-2">
             <BerylLogo size={20} />
             <span>Built with PayPal sandbox, Channel3, AI SDK and Next.js</span>
           </div>
-          <div>PayPal AI Hackathon entry. For demo and sandbox testing purposes only.</div>
+          <div>
+            {isDeveloper
+              ? "PayPal AI Hackathon entry. Deterministic policy runtime."
+              : "Autonomous AI shopping protected by BERYL guardrails."}
+          </div>
         </div>
       </footer>
 
