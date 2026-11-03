@@ -58,6 +58,21 @@ export async function executePayPalPayment(
       amount_cents: params.amountCents,
       created_at: createdAt,
     });
+
+    // 3b. Increment mandate spent_cents on successful payment
+    if (params.mandateId && (finalStatus === "COMPLETED" || order.status === "CREATED")) {
+      const { data: currentMandate } = await supabase
+        .from("mandates")
+        .select("spent_cents")
+        .eq("id", params.mandateId)
+        .maybeSingle();
+
+      const newSpent = (currentMandate?.spent_cents || 0) + params.amountCents;
+      await supabase
+        .from("mandates")
+        .update({ spent_cents: newSpent })
+        .eq("id", params.mandateId);
+    }
   } catch (err: any) {
     console.warn("⚠️ Could not persist payment record:", err.message);
   }
