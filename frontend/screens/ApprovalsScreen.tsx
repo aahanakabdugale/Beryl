@@ -29,6 +29,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useViewMode } from "@/components/view-mode-context";
 import { toast } from "sonner";
 
 interface ApprovalItem {
@@ -53,6 +54,7 @@ interface ApprovalItem {
 }
 
 export default function ApprovalsPage() {
+  const { isDeveloper } = useViewMode();
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalItem | null>(null);
@@ -94,7 +96,7 @@ export default function ApprovalsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          decision,
+          decision: decision === "APPROVE" ? "approved" : "rejected",
           reason: decision === "REJECT" ? rejectReason || "Rejected by user" : undefined,
         }),
       });
@@ -153,10 +155,12 @@ export default function ApprovalsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200/80 dark:border-[#1A332B]">
         <div>
           <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Human-in-the-Loop Approvals
+            {isDeveloper ? "Escalation Queue & Human-in-the-Loop Interceptor" : "Pending Order Approvals"}
           </h1>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Authorize or reject transactions exceeding your autonomous escalation thresholds
+            {isDeveloper
+              ? "Authorize or reject transactions exceeding your autonomous escalation thresholds"
+              : "Items your agent found that need your sign-off before charging PayPal."}
           </p>
         </div>
 
@@ -166,7 +170,7 @@ export default function ApprovalsPage() {
             size="sm"
             onClick={fetchApprovals}
             disabled={loading}
-            className="text-xs gap-1.5 h-8 border-zinc-200 dark:border-zinc-800"
+            className="text-xs gap-1.5 h-8 border-zinc-200 dark:border-zinc-800 cursor-pointer"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
             <span>Refresh</span>
@@ -176,10 +180,10 @@ export default function ApprovalsPage() {
             size="sm"
             variant="secondary"
             onClick={handleCreateMockEscalation}
-            className="text-xs gap-1.5 h-8"
+            className="text-xs gap-1.5 h-8 cursor-pointer"
           >
             <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-            <span>Generate Escalation Test</span>
+            <span>{isDeveloper ? "Generate Escalation Test" : "Sample Order ($45.00)"}</span>
           </Button>
         </div>
       </div>
@@ -188,13 +192,13 @@ export default function ApprovalsPage() {
       <Tabs defaultValue="pending" value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList className="bg-white dark:bg-[#0D1C17] border border-zinc-200/80 dark:border-[#1A332B] p-1">
           <TabsTrigger value="pending" className="text-xs font-semibold">
-            Pending Review
+            {isDeveloper ? "Pending Review" : "Waiting for You"}
           </TabsTrigger>
           <TabsTrigger value="approved" className="text-xs font-semibold">
             Approved
           </TabsTrigger>
           <TabsTrigger value="rejected" className="text-xs font-semibold">
-            Rejected
+            Declined
           </TabsTrigger>
         </TabsList>
 
@@ -211,14 +215,16 @@ export default function ApprovalsPage() {
                 No {tab} approvals found
               </div>
               <p className="text-xs text-zinc-400 max-w-sm mx-auto mt-1 mb-4">
-                When an AI agent requests an item priced above your mandate threshold, it halts here for your explicit authorization.
+                {isDeveloper
+                  ? "When an AI agent requests an item priced above your mandate threshold, it halts here for your explicit authorization."
+                  : "When your AI shopping agent finds an item priced higher than your auto-approve limit, it waits here for your 1-click confirmation."}
               </p>
               <Button
                 size="sm"
                 onClick={handleCreateMockEscalation}
-                className="bg-[#0B7A5A] hover:bg-[#086147] text-white text-xs rounded-lg"
+                className="bg-[#0B7A5A] hover:bg-[#086147] text-white text-xs rounded-lg cursor-pointer"
               >
-                Simulate $45.00 Keyboard Escalation
+                {isDeveloper ? "Simulate $45.00 Keyboard Escalation" : "Try a sample purchase approval"}
               </Button>
             </Card>
           ) : (
