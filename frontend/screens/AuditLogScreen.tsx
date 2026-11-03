@@ -19,6 +19,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useViewMode } from "@/components/view-mode-context";
+import Link from "next/link";
 import {
   Sheet,
   SheetContent,
@@ -48,6 +50,7 @@ interface AuditRow {
 }
 
 export default function AuditLogPage() {
+  const { isDeveloper, setViewMode } = useViewMode();
   const { resolvedTheme } = useTheme();
   const [rowData, setRowData] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +58,33 @@ export default function AuditLogPage() {
   const [selectedRow, setSelectedRow] = useState<AuditRow | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const gridRef = useRef<AgGridReact<AuditRow>>(null);
+
+  if (!isDeveloper) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 text-center space-y-4">
+        <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto text-[#0B7A5A] dark:text-[#3EE0A8]">
+          <FileSpreadsheet className="h-7 w-7" />
+        </div>
+        <h2 className="font-heading text-2xl font-bold">Developer Audit Trail (AG Grid)</h2>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
+          The full AG Grid audit log includes raw JSON payloads, PayPal order IDs, and deterministic rule codes for developers. For normal orders, view your Spending Analytics.
+        </p>
+        <div className="pt-2 flex justify-center gap-3">
+          <Link href="/dashboard/analytics">
+            <Button variant="outline" className="text-xs rounded-full px-5 cursor-pointer">
+              View Spending Analytics
+            </Button>
+          </Link>
+          <Button
+            onClick={() => setViewMode("developer")}
+            className="bg-[#0B7A5A] hover:bg-[#086147] text-white rounded-full px-5 text-xs cursor-pointer"
+          >
+            Switch to Developer Lab Mode
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const fetchLogs = async () => {
     setLoading(true);
