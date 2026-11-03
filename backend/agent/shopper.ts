@@ -17,7 +17,7 @@ export function getGroqModel() {
   }
 
   const groq = createGroq({ apiKey });
-  const modelName = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
+  const modelName = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
   return groq(modelName);
 }
 
@@ -36,10 +36,26 @@ export async function runShoppingAgent({
   instruction,
   mandate,
   sessionId = crypto.randomUUID(),
-  maxSteps = 5,
+  maxSteps = 4,
 }: RunShoppingAgentOptions): Promise<AgentRunResult> {
   const model = getGroqModel();
   const system = buildAgentSystemPrompt(mandate);
+
+  // Natural language intent normalization for catalog listing & browsing
+  const lower = instruction.toLowerCase().trim();
+  const isCatalogBrowsing =
+    lower.includes("which are here") ||
+    lower.includes("items below") ||
+    lower.includes("what items are here") ||
+    lower.includes("what products do you have") ||
+    lower.includes("show me all products") ||
+    lower.includes("list all items") ||
+    lower.includes("list all the items") ||
+    lower.includes("what can i buy");
+
+  const effectivePrompt = isCatalogBrowsing
+    ? `${instruction} (User is requesting to view the catalog of available products and prices)`
+    : instruction;
 
   let capturedPaymentRequest: AgentPaymentRequestInput | undefined;
   const executionSteps: AgentStep[] = [];
@@ -60,8 +76,9 @@ export async function runShoppingAgent({
   const result = await generateText({
     model,
     system,
-    prompt: instruction,
+    prompt: effectivePrompt,
     tools,
+    temperature: 0.1,
     stopWhen: stepCountIs(maxSteps),
     onStepFinish: ({ text, toolCalls, toolResults }) => {
       if (text && text.trim()) {
@@ -99,9 +116,39 @@ export async function runShoppingAgent({
     },
   });
 
+  let finalResponse = result.text?.trim();
+
+  // If text is empty because the agent stopped on a tool call/result step:
+  if (!finalResponse && capturedPaymentRequest) {
+    const formattedPrice = `$${(capturedPaymentRequest.amount_cents / 100).toFixed(2)}`;
+    finalResponse = `I found **${capturedPaymentRequest.item}** for **${formattedPrice}** from ${capturedPaymentRequest.merchant || capturedPaymentRequest.merchant_domain} and submitted a payment request to the BERYL Policy Guard.`;
+  } else if (!finalResponse) {
+    // Extract products from the most recent search tool step
+    const searchStep = executionSteps
+      .slice()
+      .reverse()
+      .find((s) => s.toolName === "search_products" && s.toolResult);
+
+    const products = searchStep?.toolResult?.products;
+    if (products && Array.isArray(products) && products.length > 0) {
+      const itemsList = products
+        .slice(0, 4)
+        .map(
+          (p: any, i: number) =>
+            `${i + 1}. **${p.title}** — **${p.price_formatted || "$" + (p.price_cents / 100).toFixed(2)}** (${p.merchant || p.merchant_domain})`
+        )
+        .join("\n");
+
+      finalResponse = `Here are the matching items found in the product catalog:\n\n${itemsList}\n\nLet me know if you would like me to request payment for any of these!`;
+    } else {
+      finalResponse =
+        "I searched the product catalog, but could not find matching in-stock items. Please let me know if you would like to adjust your search.";
+    }
+  }
+
   return {
     sessionId,
-    response: result.text,
+    response: finalResponse,
     steps: executionSteps,
     paymentRequest: capturedPaymentRequest,
   };
