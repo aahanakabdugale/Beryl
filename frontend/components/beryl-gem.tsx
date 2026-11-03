@@ -116,23 +116,5 @@ export function BerylGem({
   );
 }
 
-export function BerylLogo({
-  className = "",
-  size = 28,
-  showText = true,
-}: {
-  className?: string;
-  size?: number;
-  showText?: boolean;
-}) {
-  return (
-    <div className={`inline-flex items-center gap-2.5 font-bold tracking-tight ${className}`}>
-      <BerylGem size={size} interactive={false} />
-      {showText && (
-        <span className="font-heading text-lg tracking-wider font-extrabold text-[#07100D] dark:text-[#EDF5F2]">
-          BERYL
-        </span>
-      )}
-    </div>
-  );
-}
+export { BerylLogo } from "./beryl-logo";
+
