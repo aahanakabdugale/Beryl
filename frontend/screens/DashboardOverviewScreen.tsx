@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { useViewMode } from "@/components/view-mode-context";
 import { toast } from "sonner";
 
 interface Mandate {
@@ -41,15 +42,17 @@ interface AuditLog {
   id: string;
   created_at: string;
   amount_cents: number;
+  item?: string;
   item_name?: string;
   merchant?: string;
-  decision: "APPROVE" | "NEEDS_APPROVAL" | "BLOCK";
+  decision: string;
   rule_code: string;
   reason?: string;
   paypal_order_id?: string;
 }
 
 export default function DashboardOverview() {
+  const { isDeveloper } = useViewMode();
   const [mandates, setMandates] = useState<Mandate[]>([]);
   const [activeMandate, setActiveMandate] = useState<Mandate | null>(null);
   const [recentLogs, setRecentLogs] = useState<AuditLog[]>([]);
@@ -74,7 +77,8 @@ export default function DashboardOverview() {
       const resAudit = await fetch("/api/audit");
       if (resAudit.ok) {
         const data = await resAudit.json();
-        setRecentLogs((data.logs || []).slice(0, 6));
+        const logs = data.records || data.logs || [];
+        setRecentLogs(logs.slice(0, 6));
       }
     } catch {
       toast.error("Failed to load dashboard data");
@@ -100,14 +104,20 @@ export default function DashboardOverview() {
 
       if (res.ok) {
         setActiveMandate({ ...activeMandate, is_frozen: newStatus });
-        toast[newStatus ? "error" : "success"](
-          newStatus ? "Emergency Kill Switch Activated! Mandate Frozen." : "Mandate Unfrozen & Operational."
-        );
+        if (isDeveloper) {
+          toast[newStatus ? "error" : "success"](
+            newStatus ? "Emergency Kill Switch Activated! Mandate Frozen." : "Mandate Unfrozen & Operational."
+          );
+        } else {
+          toast[newStatus ? "info" : "success"](
+            newStatus ? "AI Shopping Paused. No purchases will be made." : "AI Shopping Resumed & Active."
+          );
+        }
       } else {
-        toast.error("Failed to update kill switch");
+        toast.error("Failed to update status");
       }
     } catch {
-      toast.error("Network error updating kill switch");
+      toast.error("Network error updating status");
     } finally {
       setFreezeLoading(false);
     }
@@ -135,10 +145,12 @@ export default function DashboardOverview() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200/80 dark:border-[#1A332B]">
         <div>
           <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Autonomous Policy Dashboard
+            {isDeveloper ? "Autonomous Policy Dashboard" : "My Shopping Wallet & Allowance"}
           </h1>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Real-time policy guard state, active mandates, and execution metrics
+            {isDeveloper
+              ? "Real-time policy guard state, active mandates, and execution metrics"
+              : "Manage your AI shopping allowance, active orders, and safety limits"}
           </p>
         </div>
 
@@ -148,7 +160,7 @@ export default function DashboardOverview() {
             size="sm"
             onClick={fetchDashboardData}
             disabled={loading}
-            className="text-xs gap-1.5 h-8 border-zinc-200 dark:border-zinc-800"
+            className="text-xs gap-1.5 h-8 border-zinc-200 dark:border-zinc-800 cursor-pointer"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
             <span>Sync</span>
@@ -157,10 +169,10 @@ export default function DashboardOverview() {
           <Link href="/dashboard/mandates/new">
             <Button
               size="sm"
-              className="bg-[#0B7A5A] hover:bg-[#086147] dark:bg-[#0B7A5A] dark:hover:bg-[#14966F] text-white text-xs gap-1.5 h-8 rounded-lg"
+              className="bg-[#0B7A5A] hover:bg-[#086147] dark:bg-[#0B7A5A] dark:hover:bg-[#14966F] text-white text-xs gap-1.5 h-8 rounded-lg cursor-pointer"
             >
               <PlusCircle className="h-3.5 w-3.5" />
-              <span>New Mandate</span>
+              <span>{isDeveloper ? "New Mandate" : "Adjust Budget"}</span>
             </Button>
           </Link>
         </div>
@@ -175,23 +187,29 @@ export default function DashboardOverview() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-[#152B23] flex items-center justify-center text-[#0B7A5A] dark:text-[#3EE0A8]">
-                    <Shield className="h-5 w-5" />
+                    {isDeveloper ? <Shield className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
                   </div>
                   <div>
                     <CardTitle className="font-heading text-lg font-bold">
-                      {activeMandate?.name || "Active Autonomous Mandate"}
+                      {activeMandate?.name || (isDeveloper ? "Active Autonomous Mandate" : "My Shopping Allowance")}
                     </CardTitle>
                     <CardDescription className="text-xs text-zinc-500">
-                      ID: <span className="font-mono">{activeMandate?.id?.slice(0, 8) || "default"}</span>
+                      {isDeveloper ? (
+                        <>
+                          ID: <span className="font-mono">{activeMandate?.id?.slice(0, 8) || "default"}</span>
+                        </>
+                      ) : (
+                        <span>Automated PayPal Guard Active</span>
+                      )}
                     </CardDescription>
                   </div>
                 </div>
 
-                {/* Status Badges & Emergency Kill Switch */}
+                {/* Status Badges & Emergency Kill Switch / Pause Shopping */}
                 <div className="flex items-center gap-3">
                   {activeMandate?.is_frozen ? (
                     <Badge variant="destructive" className="font-mono text-[10px] uppercase font-bold tracking-wider">
-                      FROZEN (KILL SWITCH)
+                      {isDeveloper ? "FROZEN (KILL SWITCH)" : "SHOPPING PAUSED"}
                     </Badge>
                   ) : isExpired ? (
                     <Badge variant="outline" className="font-mono text-[10px] text-zinc-500">
@@ -203,14 +221,17 @@ export default function DashboardOverview() {
                     </Badge>
                   )}
 
-                  {/* Kill Switch Toggle */}
+                  {/* Toggle */}
                   <div className="flex items-center gap-2 pl-2 border-l border-zinc-200 dark:border-zinc-800">
+                    <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hidden sm:inline">
+                      {isDeveloper ? "Kill Switch" : "Pause Shopping"}
+                    </span>
                     <Power className={`h-4 w-4 ${activeMandate?.is_frozen ? "text-rose-500" : "text-zinc-400"}`} />
                     <Switch
                       checked={activeMandate?.is_frozen || false}
                       onCheckedChange={handleToggleFreeze}
                       disabled={freezeLoading || !activeMandate}
-                      aria-label="Emergency Kill Switch"
+                      aria-label={isDeveloper ? "Emergency Kill Switch" : "Pause AI Shopping"}
                     />
                   </div>
                 </div>
@@ -223,7 +244,7 @@ export default function DashboardOverview() {
                 {/* Remaining Balance Display */}
                 <div>
                   <div className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                    Remaining Budget
+                    {isDeveloper ? "Remaining Budget" : "Remaining Allowance"}
                   </div>
                   <div className="font-heading text-4xl font-extrabold text-[#0B7A5A] dark:text-[#3EE0A8] mt-1">
                     ${(remainingCents / 100).toFixed(2)}
@@ -261,7 +282,9 @@ export default function DashboardOverview() {
               {/* Policy Threshold Parameters */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
                 <div className="p-3 rounded-xl bg-zinc-50 dark:bg-[#12241E] border border-zinc-200/60 dark:border-[#1E3A31]">
-                  <div className="text-[10px] font-mono text-zinc-400 uppercase">Per-Item Limit</div>
+                  <div className="text-[10px] font-mono text-zinc-400 uppercase">
+                    {isDeveloper ? "Per-Item Limit" : "Max Per Item"}
+                  </div>
                   <div className="font-heading text-lg font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
                     ${((activeMandate?.per_purchase_limit_cents || 2500) / 100).toFixed(2)}
                   </div>
@@ -269,7 +292,7 @@ export default function DashboardOverview() {
 
                 <div className="p-3 rounded-xl bg-amber-50/70 dark:bg-[#251E11] border border-amber-500/20">
                   <div className="text-[10px] font-mono text-amber-700 dark:text-amber-400 uppercase">
-                    Escalate Above
+                    {isDeveloper ? "Escalate Above" : "Ask Me Above"}
                   </div>
                   <div className="font-heading text-lg font-bold text-amber-800 dark:text-amber-300 mt-0.5">
                     ${((activeMandate?.ask_above_cents || 1500) / 100).toFixed(2)}
@@ -293,7 +316,7 @@ export default function DashboardOverview() {
                 <div className="p-3 rounded-xl bg-zinc-50 dark:bg-[#12241E] border border-zinc-200/60 dark:border-[#1E3A31]">
                   <div className="text-[10px] font-mono text-zinc-400 uppercase flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    <span>Expiry</span>
+                    <span>{isDeveloper ? "Expiry" : "Active Until"}</span>
                   </div>
                   <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                     {expiresAtText}
@@ -306,80 +329,159 @@ export default function DashboardOverview() {
 
         {/* Right Side: Quick Action Launchers (Col 4) */}
         <div className="lg:col-span-4 space-y-4">
-          {/* Launch Agent Card */}
-          <Card className="bg-[#0B7A5A] text-white border-0 shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="font-heading text-lg font-bold flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                AI Shopper Agent
-              </CardTitle>
-              <CardDescription className="text-emerald-100 text-xs">
-                Test the autonomous agent with Groq & Channel3 live catalog tools.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <Link href="/dashboard/agent">
-                <Button className="w-full bg-white text-[#0B7A5A] hover:bg-zinc-100 font-semibold text-xs h-9 rounded-lg gap-1.5 cursor-pointer">
-                  <span>Open Agent Chat & Timeline</span>
-                  <ArrowUpRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          {isDeveloper ? (
+            <>
+              {/* Launch Agent Card */}
+              <Card className="bg-[#0B7A5A] text-white border-0 shadow-md">
+                <CardHeader className="pb-2">
+                  <CardTitle className="font-heading text-lg font-bold flex items-center gap-2">
+                    <Bot className="h-5 w-5" />
+                    AI Shopper Agent
+                  </CardTitle>
+                  <CardDescription className="text-emerald-100 text-xs">
+                    Test the autonomous agent with Groq & Channel3 live catalog tools.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <Link href="/dashboard/agent">
+                    <Button className="w-full bg-white text-[#0B7A5A] hover:bg-zinc-100 font-semibold text-xs h-9 rounded-lg gap-1.5 cursor-pointer">
+                      <span>Open Agent Chat & Timeline</span>
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
 
-          {/* Launch Attack Lab Card */}
-          <Card className="bg-[#07100D] border-[#1A332B] text-zinc-100">
-            <CardHeader className="pb-2">
-              <CardTitle className="font-heading text-lg font-bold flex items-center gap-2 text-rose-400">
-                <ShieldAlert className="h-5 w-5" />
-                Red-Team Attack Lab
-              </CardTitle>
-              <CardDescription className="text-zinc-400 text-xs">
-                Test prompt injection, price spoofing, and malicious trap pages.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <Link href="/dashboard/attack-lab">
-                <Button
-                  variant="outline"
-                  className="w-full border-rose-500/40 text-rose-300 hover:bg-rose-950/40 font-semibold text-xs h-9 rounded-lg gap-1.5 cursor-pointer"
-                >
-                  <span>Launch Attack Scoreboard</span>
-                  <ArrowUpRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+              {/* Launch Attack Lab Card */}
+              <Card className="bg-[#07100D] border-[#1A332B] text-zinc-100">
+                <CardHeader className="pb-2">
+                  <CardTitle className="font-heading text-lg font-bold flex items-center gap-2 text-rose-400">
+                    <ShieldAlert className="h-5 w-5" />
+                    Red-Team Attack Lab
+                  </CardTitle>
+                  <CardDescription className="text-zinc-400 text-xs">
+                    Test prompt injection, price spoofing, and malicious trap pages.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <Link href="/dashboard/attack-lab">
+                    <Button
+                      variant="outline"
+                      className="w-full border-rose-500/40 text-rose-300 hover:bg-rose-950/40 font-semibold text-xs h-9 rounded-lg gap-1.5 cursor-pointer"
+                    >
+                      <span>Launch Attack Scoreboard</span>
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <>
+              {/* Consumer Card 1: Shop with Agent */}
+              <Card className="bg-[#0B7A5A] text-white border-0 shadow-md">
+                <CardHeader className="pb-2">
+                  <CardTitle className="font-heading text-lg font-bold flex items-center gap-2">
+                    <ShoppingBag className="h-5 w-5" />
+                    AI Personal Shopper
+                  </CardTitle>
+                  <CardDescription className="text-emerald-100 text-xs">
+                    Tell your agent what you want to buy. It searches verified items within your allowance.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <Link href="/dashboard/agent">
+                    <Button className="w-full bg-white text-[#0B7A5A] hover:bg-zinc-100 font-semibold text-xs h-9 rounded-lg gap-1.5 cursor-pointer">
+                      <span>Shop with Agent Now</span>
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Consumer Card 2: Pending Approvals */}
+              <Card className="bg-white dark:bg-[#0D1C17] border border-zinc-200/80 dark:border-[#1A332B]">
+                <CardHeader className="pb-2">
+                  <CardTitle className="font-heading text-lg font-bold flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                    <AlertTriangle className="h-5 w-5" />
+                    Order Approvals
+                  </CardTitle>
+                  <CardDescription className="text-zinc-500 dark:text-zinc-400 text-xs">
+                    Items found by your agent that exceed your auto-approve limit and need your green light.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <Link href="/dashboard/approvals">
+                    <Button
+                      variant="outline"
+                      className="w-full border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-semibold text-xs h-9 rounded-lg gap-1.5 cursor-pointer"
+                    >
+                      <span>Review Pending Orders</span>
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Recent Decisions Section */}
+      {/* Recent Decisions / Orders Section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-heading text-xl font-bold tracking-tight">Recent Decisions</h2>
-            <p className="text-xs text-zinc-500">Live guard execution record</p>
+            <h2 className="font-heading text-xl font-bold tracking-tight">
+              {isDeveloper ? "Recent Decisions" : "Recent Orders & Activity"}
+            </h2>
+            <p className="text-xs text-zinc-500">
+              {isDeveloper ? "Live guard execution record" : "Purchases and requests handled by your agent"}
+            </p>
           </div>
-          <Link
-            href="/dashboard/audit"
-            className="text-xs font-semibold text-[#0B7A5A] dark:text-[#3EE0A8] hover:underline flex items-center gap-1"
-          >
-            <span>Full AG Grid Audit Log</span>
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
+          {isDeveloper ? (
+            <Link
+              href="/dashboard/audit"
+              className="text-xs font-semibold text-[#0B7A5A] dark:text-[#3EE0A8] hover:underline flex items-center gap-1"
+            >
+              <span>Full AG Grid Audit Log</span>
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          ) : (
+            <Link
+              href="/dashboard/analytics"
+              className="text-xs font-semibold text-[#0B7A5A] dark:text-[#3EE0A8] hover:underline flex items-center gap-1"
+            >
+              <span>View Spending Analytics</span>
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
         </div>
 
         <div className="bg-white dark:bg-[#0D1C17] border border-zinc-200/80 dark:border-[#1A332B] rounded-2xl overflow-hidden shadow-xs">
           {recentLogs.length === 0 ? (
             <div className="p-8 text-center text-xs text-zinc-500">
-              No transactions recorded yet. Launch the AI Shopper Agent or Attack Lab to simulate requests!
+              {isDeveloper
+                ? "No transactions recorded yet. Launch the AI Shopper Agent or Attack Lab to simulate requests!"
+                : "No shopping orders yet. Start a chat with your AI Shopper to find and buy items!"}
             </div>
           ) : (
             <div className="divide-y divide-zinc-100 dark:divide-[#162E25]">
               {recentLogs.map((log) => {
-                const isApprove = log.decision === "APPROVE";
-                const isNeedsApproval = log.decision === "NEEDS_APPROVAL";
-                const isBlock = log.decision === "BLOCK";
+                const dec = (log.decision || "").toUpperCase();
+                const isApprove = dec === "APPROVE";
+                const isNeedsApproval = dec === "NEEDS_APPROVAL";
+                const isBlock = dec === "BLOCK";
+
+                const getFriendlyReason = (code: string) => {
+                  if (code.includes("APPROVAL") || code.includes("THRESHOLD") || code.includes("ASK")) {
+                    return "Requires your approval";
+                  }
+                  if (code.includes("BUDGET")) return "Exceeds total budget";
+                  if (code.includes("PURCHASE_LIMIT")) return "Exceeds single item limit";
+                  if (code.includes("INJECTION")) return "Stopped for security";
+                  if (code.includes("FREEZE")) return "Shopping is paused";
+                  return "Verified checkout";
+                };
 
                 return (
                   <div
@@ -407,12 +509,12 @@ export default function DashboardOverview() {
 
                       <div>
                         <div className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">
-                          {log.item_name || "Payment Request"}
+                          {log.item || log.item_name || "Payment Request"}
                         </div>
-                        <div className="text-[11px] text-zinc-500 flex items-center gap-2 mt-0.5 font-mono">
-                          <span>{log.merchant || "Channel3 Merchant"}</span>
+                        <div className="text-[11px] text-zinc-500 flex items-center gap-2 mt-0.5">
+                          <span>{log.merchant || "Verified Merchant"}</span>
                           <span>•</span>
-                          <span>{new Date(log.created_at).toLocaleTimeString()}</span>
+                          <span>{new Date(log.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                         </div>
                       </div>
                     </div>
@@ -422,26 +524,48 @@ export default function DashboardOverview() {
                         <div className="font-heading text-sm font-bold text-zinc-900 dark:text-zinc-100">
                           ${(log.amount_cents / 100).toFixed(2)}
                         </div>
-                        <div className="font-mono text-[10px] text-zinc-400">
-                          {log.rule_code}
+                        <div className="text-[10px] text-zinc-400">
+                          {isDeveloper ? log.rule_code : getFriendlyReason(log.rule_code)}
                         </div>
                       </div>
 
                       <div>
-                        {isApprove && (
-                          <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-[#3EE0A8] text-[10px] font-mono">
-                            APPROVED
-                          </Badge>
-                        )}
-                        {isNeedsApproval && (
-                          <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-mono">
-                            NEEDS APPROVAL
-                          </Badge>
-                        )}
-                        {isBlock && (
-                          <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-mono">
-                            BLOCKED
-                          </Badge>
+                        {isDeveloper ? (
+                          <>
+                            {isApprove && (
+                              <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-[#3EE0A8] text-[10px] font-mono">
+                                APPROVED
+                              </Badge>
+                            )}
+                            {isNeedsApproval && (
+                              <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-mono">
+                                NEEDS APPROVAL
+                              </Badge>
+                            )}
+                            {isBlock && (
+                              <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-mono">
+                                BLOCKED
+                              </Badge>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {isApprove && (
+                              <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-[#3EE0A8] text-[10px] font-medium">
+                                PAID (PAYPAL)
+                              </Badge>
+                            )}
+                            {isNeedsApproval && (
+                              <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-medium">
+                                WAITING FOR YOU
+                              </Badge>
+                            )}
+                            {isBlock && (
+                              <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-medium">
+                                STOPPED BY LIMIT
+                              </Badge>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
