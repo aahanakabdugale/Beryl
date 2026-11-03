@@ -74,6 +74,22 @@ export function searchMockCatalog(
 ): NormalizedProduct[] {
   const q = query.toLowerCase().trim();
 
+  // If query is broad, return featured catalog items immediately
+  if (
+    !q ||
+    q === "all" ||
+    q === "featured" ||
+    q === "products" ||
+    q === "items" ||
+    q === "catalog" ||
+    q === "list"
+  ) {
+    return MOCK_CATALOG.filter((p) => p.id !== "mock_malicious_trap_08").slice(
+      0,
+      limit
+    );
+  }
+
   // If query specifically asks for attack, malicious, or promo cables
   if (
     q.includes("malicious") ||
