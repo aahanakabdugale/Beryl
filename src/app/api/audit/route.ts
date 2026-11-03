@@ -434,6 +434,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       records: paginatedRecords,
+      logs: paginatedRecords,
       ...(filters.view === "all" ? { system_events: systemEvents } : {}),
       pagination: {
         page: filters.page,
