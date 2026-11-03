@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       query = query.eq("status", statusFilter);
     }
 
-    const { data: mandates, error } = await query;
+    let { data: mandates, error } = await query;
 
     if (error) {
       return NextResponse.json(
@@ -38,23 +38,71 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // For each mandate, calculate spent amount from completed payments
+    // Auto-provision a default active mandate if new user has none
+    if (!mandates || mandates.length === 0) {
+      const defaultMandate = {
+        user_id: user.id,
+        name: "My Shopping Allowance",
+        total_budget_cents: 10000, // $100.00
+        per_purchase_limit_cents: 5000, // $50.00
+        approval_threshold_cents: 3500, // $35.00
+        allowed_categories: ["electronics", "office supplies", "accessories", "books"],
+        allowed_merchants: ["amazon.com", "bestbuy.com", "target.com", "trychannel3.com"],
+        blocked_merchants: ["shadydeals.xyz", "giftcardhub.net"],
+        status: "active",
+        created_at: new Date().toISOString(),
+      };
+      const { data: createdMandate } = await supabase
+        .from("mandates")
+        .insert(defaultMandate)
+        .select()
+        .single();
+      if (createdMandate) {
+        mandates = [createdMandate];
+      }
+    }
+
+    // For each mandate, calculate spent amount from completed/approved payments
     const mandateIds = (mandates || []).map((m) => m.id);
     let spentMap: Record<string, number> = {};
 
     if (mandateIds.length > 0) {
       const { data: requests } = await supabase
         .from("payment_requests")
-        .select("id, mandate_id, amount_cents, decisions(outcome)")
+        .select(`
+          id,
+          mandate_id,
+          amount_cents,
+          decisions (outcome),
+          approvals (status),
+          payments (paypal_status)
+        `)
         .in("mandate_id", mandateIds);
 
       if (requests) {
         for (const req of requests) {
-          const isApproved =
-            Array.isArray(req.decisions) &&
-            req.decisions.some((d: any) => d.outcome === "approve");
+          const decList = Array.isArray(req.decisions)
+            ? req.decisions
+            : req.decisions
+            ? [req.decisions]
+            : [];
+          const isAutoApproved = decList.some((d: any) => d.outcome === "approve");
 
-          if (isApproved && req.mandate_id) {
+          const appList = Array.isArray(req.approvals)
+            ? req.approvals
+            : req.approvals
+            ? [req.approvals]
+            : [];
+          const isHumanApproved = appList.some((a: any) => a.status === "approved");
+
+          const payList = Array.isArray(req.payments)
+            ? req.payments
+            : req.payments
+            ? [req.payments]
+            : [];
+          const isPaid = payList.some((p: any) => p.paypal_status === "COMPLETED");
+
+          if ((isAutoApproved || isHumanApproved || isPaid) && req.mandate_id) {
             spentMap[req.mandate_id] =
               (spentMap[req.mandate_id] || 0) + (req.amount_cents || 0);
           }
@@ -63,7 +111,7 @@ export async function GET(request: NextRequest) {
     }
 
     const enrichedMandates = (mandates || []).map((m) => {
-      const spentCents = spentMap[m.id] || 0;
+      const spentCents = spentMap[m.id] !== undefined ? spentMap[m.id] : (m.spent_cents || 0);
       const remainingCents = Math.max(0, m.total_budget_cents - spentCents);
       const isExpired =
         m.expires_at && new Date(m.expires_at).getTime() < Date.now();
