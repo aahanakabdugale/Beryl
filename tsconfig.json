@@ -23,7 +23,7 @@
       "@/backend/*": ["./backend/*"],
       "@/frontend/*": ["./frontend/*"],
       "@/database/*": ["./database/*"],
-      "@/lib/*": ["./backend/*", "./src/lib/*"],
+      "@/lib/*": ["./src/lib/*", "./backend/*"],
       "@/components/*": ["./frontend/components/*", "./src/components/*"]
     }
   },
