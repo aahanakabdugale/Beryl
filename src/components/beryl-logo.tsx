@@ -1,0 +1,42 @@
+import React from "react";
+
+export interface BerylLogoProps {
+  size?: number | string;
+}
+
+export function BerylLogo({ size = 32 }: BerylLogoProps) {
+  return (
+    <svg
+      viewBox="0 0 180 180"
+      width={size}
+      height={size}
+      xmlns="http://www.w3.org/2000/svg"
+      role="img"
+      aria-label="BERYL"
+    >
+      <polygon
+        points="90,30 140.2,59 140.2,121 90,150 39.8,121 39.8,59"
+        fill="#19B98B"
+      />
+      <polygon points="90,30 140.2,59 119.4,71 90,54" fill="#7EE8C3" />
+      <polygon points="90,30 39.8,59 60.6,71 90,54" fill="#5FD3B0" />
+      <polygon
+        points="90,56 119.4,73 119.4,107 90,124 60.6,107 60.6,73"
+        fill="#0B2B24"
+        stroke="#E6FFF5"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M39.8 121 L60.6 107 M140.2 121 L119.4 107 M90 150 V124 M39.8 59 L60.6 73 M140.2 59 L119.4 73"
+        fill="none"
+        stroke="#0B2B24"
+        strokeWidth="2.5"
+      />
+      <circle cx="90" cy="88" r="9" fill="#7EE8C3" />
+      <path d="M85 94 H95 L98 111 H82 Z" fill="#7EE8C3" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export default BerylLogo;
