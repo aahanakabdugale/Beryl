@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useViewMode } from "@/components/view-mode-context";
 import { toast } from "sonner";
 
 interface RedTeamResult {
@@ -34,11 +35,34 @@ interface RedTeamResult {
 }
 
 export default function AttackLabPage() {
+  const { isDeveloper, setViewMode } = useViewMode();
   const [running, setRunning] = useState(false);
   const [scoreboard, setScoreboard] = useState<any>(null);
   const [results, setResults] = useState<RedTeamResult[]>([]);
   const [simulatingTrap, setSimulatingTrap] = useState(false);
   const [trapSimulated, setTrapSimulated] = useState(false);
+
+  if (!isDeveloper) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 text-center space-y-4">
+        <div className="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-500">
+          <Terminal className="h-7 w-7" />
+        </div>
+        <h2 className="font-heading text-2xl font-bold">Developer Lab Module</h2>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
+          The Red-Team Attack Lab is designed for security auditors and engineers to test prompt injection, price tampering, and policy guard evasion.
+        </p>
+        <div className="pt-2 flex justify-center gap-3">
+          <Button
+            onClick={() => setViewMode("developer")}
+            className="bg-[#0B7A5A] hover:bg-[#086147] text-white rounded-full px-6 text-xs cursor-pointer"
+          >
+            Switch to Developer Lab Mode
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleRunAllScenarios = async () => {
     setRunning(true);
