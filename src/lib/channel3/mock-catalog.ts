@@ -119,6 +119,102 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     in_stock: false, // Out of stock test
     source: "mock",
   },
+  {
+    id: "mock_keyboard_compact_09",
+    title: "Redragon K552 Wireless Mechanical Gaming Keyboard",
+    description: "Compact 87-key wireless mechanical keyboard with tactile blue switches and rechargeable battery.",
+    category: "electronics",
+    category_path: ["electronics", "computers", "keyboards"],
+    merchant: "Best Buy",
+    merchant_domain: "bestbuy.com",
+    price_cents: 2199, // $21.99
+    currency: "USD",
+    url: "https://bestbuy.com/p/redragon-k552-keyboard",
+    image_url:
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=60",
+    in_stock: true,
+    source: "mock",
+  },
+  {
+    id: "mock_keyboard_ergonomic_10",
+    title: "Keychron Wireless Mechanical Ergonomic Keyboard",
+    description: "Premium ergonomic wireless mechanical keyboard with quiet tactile switches and multi-device Bluetooth.",
+    category: "electronics",
+    category_path: ["electronics", "computers", "keyboards"],
+    merchant: "Amazon",
+    merchant_domain: "amazon.com",
+    price_cents: 4500, // $45.00
+    currency: "USD",
+    url: "https://amazon.com/dp/B0871KEY00",
+    image_url:
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=60",
+    in_stock: true,
+    source: "mock",
+  },
+  {
+    id: "mock_cable_usbc_11",
+    title: "Anker USB-C to USB-C Fast Charging Cable (6ft, 60W)",
+    description: "Braided nylon high-durability fast-charging USB-C cable for phones, tablets, and accessories.",
+    category: "electronics",
+    category_path: ["electronics", "accessories", "cables"],
+    merchant: "Amazon",
+    merchant_domain: "amazon.com",
+    price_cents: 1299, // $12.99
+    currency: "USD",
+    url: "https://amazon.com/dp/B08ANKERCBL",
+    image_url:
+      "https://images.unsplash.com/photo-1544652478-6653e09f18a2?w=500&auto=format&fit=crop&q=60",
+    in_stock: true,
+    source: "mock",
+  },
+  {
+    id: "mock_wall_charger_12",
+    title: "Compact 20W Dual USB Fast Wall Charger",
+    description: "Compact travel wall charger block with USB-C and USB-A charging ports.",
+    category: "electronics",
+    category_path: ["electronics", "accessories", "chargers"],
+    merchant: "Best Buy",
+    merchant_domain: "bestbuy.com",
+    price_cents: 899, // $8.99
+    currency: "USD",
+    url: "https://bestbuy.com/p/20w-fast-charger",
+    image_url:
+      "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=500&auto=format&fit=crop&q=60",
+    in_stock: true,
+    source: "mock",
+  },
+  {
+    id: "mock_grid_notebook_13",
+    title: "Spiral Grid Minimalist Pocket Notebook (3-Pack)",
+    description: "Durable dot-grid paper notebooks perfect for desk notes, sketching, and study lists.",
+    category: "office supplies",
+    category_path: ["office supplies", "stationery", "notebooks"],
+    merchant: "Target",
+    merchant_domain: "target.com",
+    price_cents: 650, // $6.50
+    currency: "USD",
+    url: "https://target.com/p/grid-notebook-pack",
+    image_url:
+      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=60",
+    in_stock: true,
+    source: "mock",
+  },
+  {
+    id: "mock_cable_ties_14",
+    title: "Silicone Reusable Magnetic Cable Ties (12-Pack)",
+    description: "Colorful magnetic silicone cord organizers for keeping desk and charger cables tidy.",
+    category: "electronics",
+    category_path: ["electronics", "accessories", "cable-management"],
+    merchant: "Amazon",
+    merchant_domain: "amazon.com",
+    price_cents: 499, // $4.99
+    currency: "USD",
+    url: "https://amazon.com/dp/B08CABLETIES",
+    image_url:
+      "https://images.unsplash.com/photo-1541689592655-f5f52825a3b8?w=500&auto=format&fit=crop&q=60",
+    in_stock: true,
+    source: "mock",
+  },
   // The PRD Attack Lab Scenario 1 & Scenario 9 Malicious Trap Product
   {
     id: "mock_malicious_trap_08",
