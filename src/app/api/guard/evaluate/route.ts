@@ -24,16 +24,31 @@ export async function POST(request: NextRequest) {
     const requestId = payload.id || crypto.randomUUID();
     const supabase = createAdminClient();
 
-    // 1. Fetch the Mandate
-    const { data: mandate, error: mandateError } = await supabase
-      .from("mandates")
-      .select("*")
-      .eq("id", payload.mandate_id)
-      .single();
+    // 1. Fetch the Mandate (by ID or active mandate fallback)
+    let mandate = null;
+    if (payload.mandate_id) {
+      const { data } = await supabase
+        .from("mandates")
+        .select("*")
+        .eq("id", payload.mandate_id)
+        .maybeSingle();
+      mandate = data;
+    }
 
-    if (mandateError || !mandate) {
+    if (!mandate) {
+      const { data } = await supabase
+        .from("mandates")
+        .select("*")
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      mandate = data;
+    }
+
+    if (!mandate) {
       return NextResponse.json(
-        { error: "Mandate not found for the specified mandate_id" },
+        { error: "No active mandate found to evaluate payment against." },
         { status: 404 }
       );
     }
