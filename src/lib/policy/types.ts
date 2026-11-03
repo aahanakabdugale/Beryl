@@ -132,7 +132,7 @@ export const PaymentRequestSchema = z.object({
 export type PaymentRequest = z.infer<typeof PaymentRequestSchema>;
 
 export const GuardEvaluateInputSchema = PaymentRequestSchema.extend({
-  mandate_id: z.string().uuid("A valid mandate_id UUID is required"),
+  mandate_id: z.string().uuid("A valid mandate_id UUID is required").optional().nullable(),
   auto_execute_payment: z.boolean().default(true),
 });
 
