@@ -23,35 +23,35 @@ export function createAgentTools(
       inputSchema: z.object({
         query: z
           .string()
+          .default("all")
           .describe(
-            "The search query (e.g., 'ergonomic wireless mouse', 'phone stand')"
+            "The search query (e.g., 'ergonomic wireless mouse', 'phone stand', 'all', 'featured')"
           ),
         limit: z
           .number()
           .int()
           .min(1)
-          .max(10)
+          .max(4)
           .default(4)
           .describe("Maximum number of products to return"),
       }),
-      execute: async ({ query, limit }) => {
-        const products = await searchProducts(query, { limit });
+      execute: async ({ query, limit = 3 }) => {
+        const products = await searchProducts(query, { limit: Math.min(limit, 3) });
         return {
           query,
           count: products.length,
-          products: products.map((p) => ({
+          products: products.slice(0, 3).map((p) => ({
             id: p.id,
             title: p.title,
-            description: p.description,
+            description: p.description ? p.description.slice(0, 80) : "",
             category: p.category,
             merchant: p.merchant,
             merchant_domain: p.merchant_domain,
             price_cents: p.price_cents,
             price_formatted: `$${(p.price_cents / 100).toFixed(2)}`,
             currency: p.currency,
-            url: p.url,
             in_stock: p.in_stock,
-            untrusted_metadata: p.untrusted_metadata,
+            untrusted_metadata: p.untrusted_metadata ? p.untrusted_metadata.slice(0, 100) : undefined,
           })),
         };
       },
