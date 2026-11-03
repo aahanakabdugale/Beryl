@@ -26,7 +26,18 @@ export async function POST(
     }
 
     const body = await request.json();
-    const parseResult = DecideApprovalSchema.safeParse(body);
+    const rawDecision = typeof body.decision === "string" ? body.decision.toLowerCase().trim() : "";
+    const normalizedDecision =
+      rawDecision === "approve" || rawDecision === "approved"
+        ? "approved"
+        : rawDecision === "reject" || rawDecision === "rejected"
+        ? "rejected"
+        : body.decision;
+
+    const parseResult = DecideApprovalSchema.safeParse({
+      ...body,
+      decision: normalizedDecision,
+    });
 
     if (!parseResult.success) {
       return NextResponse.json(
