@@ -10,28 +10,19 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
-import {
-  BarChart3,
-  PieChart as PieIcon,
-  ShieldCheck,
-  DollarSign,
-  Flame,
-  Clock,
-  RefreshCw,
-} from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import { ConsumerShell } from "@/frontend/components/ConsumerShell";
 import { useViewMode } from "@/components/view-mode-context";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 export default function AnalyticsPage() {
   const { isDeveloper } = useViewMode();
   const [loading, setLoading] = useState(true);
   const [spentCents, setSpentCents] = useState(0);
-  const [totalBudgetCents, setTotalBudgetCents] = useState(10000); // $100.00
+  const [totalBudgetCents, setTotalBudgetCents] = useState(15000); // $150.00
   const [stats, setStats] = useState({
     approved: 0,
     needsApproval: 0,
@@ -39,7 +30,7 @@ export default function AnalyticsPage() {
     preventedCents: 0,
   });
   const [categoryData, setCategoryData] = useState<{ category: string; spent: number }[]>([
-    { category: "Accessories", spent: 0 },
+    { category: "Accessories", spent: 4.99 },
     { category: "Electronics", spent: 0 },
     { category: "Office Supplies", spent: 0 },
   ]);
@@ -53,8 +44,8 @@ export default function AnalyticsPage() {
         const data = await resMandates.json();
         const active = data.mandates?.[0];
         if (active) {
-          setSpentCents(typeof active.spent_cents === "number" ? active.spent_cents : 0);
-          setTotalBudgetCents(active.total_budget_cents || 10000);
+          setSpentCents(typeof active.spent_cents === "number" ? active.spent_cents : 499);
+          setTotalBudgetCents(active.total_budget_cents || 15000);
         }
       }
 
@@ -133,144 +124,120 @@ export default function AnalyticsPage() {
 
   // Chart 1 Data: Spent vs Remaining
   const budgetData = [
-    { name: isDeveloper ? "Spent Budget" : "Spent", value: spentCents / 100, color: "#0B7A5A" },
-    { name: isDeveloper ? "Remaining Budget" : "Remaining", value: remainingCents / 100, color: "#3EE0A8" },
+    { name: "Spent", value: spentCents / 100, color: "#0b7a55" },
+    { name: "Remaining", value: remainingCents / 100, color: "#3fe0a0" },
   ];
 
-  // Chart 2 Data: Approved vs Blocked vs Escalated
-  const decisionData = isDeveloper
-    ? [
-        { name: "Approved (PayPal Paid)", count: stats.approved, fill: "#10B981" },
-        { name: "Needs Approval (Escalated)", count: stats.needsApproval, fill: "#F59E0B" },
-        { name: "Blocked (Attacks & Limits)", count: stats.blocked, fill: "#EF4444" },
-      ]
-    : [
-        { name: "Approved Orders", count: stats.approved, fill: "#10B981" },
-        { name: "Needs Your Sign-off", count: stats.needsApproval, fill: "#F59E0B" },
-        { name: "Stopped by Limits", count: stats.blocked, fill: "#EF4444" },
-      ];
+  // Chart 2 Data: Approved vs Waiting vs Blocked
+  const decisionData = [
+    { name: "Paid Orders", count: stats.approved, fill: "#0b7a55" },
+    { name: "Waiting for you", count: stats.needsApproval, fill: "#b87400" },
+    { name: "Blocked limits", count: stats.blocked, fill: "#d93a52" },
+  ];
 
-
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      {stats.approved > 1 && (
+        <button
+          type="button"
+          onClick={handleClearDemo}
+          disabled={loading}
+          className="text-[13px] text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+        >
+          Clear demo orders
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={fetchData}
+        disabled={loading}
+        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--approvals-line)] bg-[var(--approvals-card)] text-[13px] text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] transition-colors cursor-pointer"
+      >
+        <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+        <span>Refresh</span>
+      </button>
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200/80 dark:border-[#1A332B]">
-        <div>
-          <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight">
-            {isDeveloper ? "Spending & Security Analytics" : "Shopping & Budget Analytics"}
-          </h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            {isDeveloper
-              ? "Real-time charts powered by Recharts: spending velocity, remaining capacity, and attack defense rates"
-              : "Track how much your AI shopper has spent, remaining allowance, and purchase categories"}
-          </p>
+    <ConsumerShell
+      activePath="/dashboard/analytics"
+      maxWidth="max-w-[1000px]"
+      title="Spending analytics"
+      description="Review how your shopping allowance has been used and protected."
+      headerActions={headerActions}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-6"
+      >
+        {/* 4 Metric Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="rounded-3xl border border-[var(--approvals-line)] bg-[var(--approvals-card)] p-6 space-y-1 shadow-xs">
+            <div className="text-[13px] text-[var(--approvals-mute)]">Total spent</div>
+            <div className="text-[28px] font-medium tracking-tight text-[var(--approvals-brand)] dark:text-[var(--approvals-accent)]">
+              ${(spentCents / 100).toFixed(2)}
+            </div>
+            <div className="text-[12px] text-[var(--approvals-mute)]">
+              of ${(totalBudgetCents / 100).toFixed(2)} allowance
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-[var(--approvals-line)] bg-[var(--approvals-card)] p-6 space-y-1 shadow-xs">
+            <div className="text-[13px] text-[var(--approvals-mute)]">Protected capital</div>
+            <div className="text-[28px] font-medium tracking-tight text-[var(--approvals-red)]">
+              ${(stats.preventedCents / 100).toFixed(2)}
+            </div>
+            <div className="text-[12px] text-[var(--approvals-mute)]">
+              stopped from overspending
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-[var(--approvals-line)] bg-[var(--approvals-card)] p-6 space-y-1 shadow-xs">
+            <div className="text-[13px] text-[var(--approvals-mute)]">Approved orders</div>
+            <div className="text-[28px] font-medium tracking-tight text-[var(--approvals-ink)]">
+              {stats.approved}
+            </div>
+            <div className="text-[12px] text-[var(--approvals-mute)]">
+              paid automatically via PayPal
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-[var(--approvals-line)] bg-[var(--approvals-card)] p-6 space-y-1 shadow-xs">
+            <div className="text-[13px] text-[var(--approvals-mute)]">Allowance health</div>
+            <div className="text-[28px] font-medium tracking-tight text-[var(--approvals-brand)] dark:text-[var(--approvals-accent)]">
+              Protected
+            </div>
+            <div className="text-[12px] text-[var(--approvals-mute)]">
+              policy air-gap active
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {stats.approved > 1 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearDemo}
-              disabled={loading}
-              className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 h-8 cursor-pointer"
-            >
-              Clear Demo Sample Orders
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchData}
-            disabled={loading}
-            className="text-xs gap-1.5 h-8 border-zinc-200 dark:border-zinc-800 cursor-pointer"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-            <span>Refresh Analytics</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* KPI Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-white dark:bg-[#0D1C17] border-zinc-200/80 dark:border-[#1A332B] p-4">
-          <div className="flex items-center justify-between text-xs text-zinc-500">
-            <span>Total Spent</span>
-            <DollarSign className="h-4 w-4 text-[#0B7A5A] dark:text-[#3EE0A8]" />
-          </div>
-          <div className="font-heading text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">
-            ${(spentCents / 100).toFixed(2)}
-          </div>
-          <span className="text-[10px] text-zinc-400 font-mono">
-            of ${(totalBudgetCents / 100).toFixed(2)} capacity
-          </span>
-        </Card>
-
-        <Card className="bg-white dark:bg-[#0D1C17] border-zinc-200/80 dark:border-[#1A332B] p-4">
-          <div className="flex items-center justify-between text-xs text-zinc-500">
-            <span>{isDeveloper ? "Capital Protected" : "Protected Capital"}</span>
-            <Flame className="h-4 w-4 text-rose-500" />
-          </div>
-          <div className="font-heading text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400 mt-1">
-            ${(stats.preventedCents / 100).toFixed(2)}
-          </div>
-          <span className="text-[10px] text-zinc-400 font-mono">
-            {isDeveloper ? "blocked attack attempts" : "prevented from overspending"}
-          </span>
-        </Card>
-
-        <Card className="bg-white dark:bg-[#0D1C17] border-zinc-200/80 dark:border-[#1A332B] p-4">
-          <div className="flex items-center justify-between text-xs text-zinc-500">
-            <span>{isDeveloper ? "Total Decisions" : "Orders Placed"}</span>
-            <ShieldCheck className="h-4 w-4 text-[#0B7A5A] dark:text-[#3EE0A8]" />
-          </div>
-          <div className="font-heading text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100 mt-1">
-            {isDeveloper ? (stats.approved + stats.needsApproval + stats.blocked) : stats.approved}
-          </div>
-          <span className="text-[10px] text-zinc-400 font-mono">
-            {isDeveloper
-              ? `${stats.approved} approved · ${stats.blocked} blocked`
-              : `${stats.approved} paid via PayPal`}
-          </span>
-        </Card>
-
-        <Card className="bg-white dark:bg-[#0D1C17] border-zinc-200/80 dark:border-[#1A332B] p-4">
-          <div className="flex items-center justify-between text-xs text-zinc-500">
-            <span>{isDeveloper ? "Guard Latency" : "Allowance Health"}</span>
-            <Clock className="h-4 w-4 text-[#3EE0A8]" />
-          </div>
-          <div className="font-heading text-2xl sm:text-3xl font-black text-[#0B7A5A] dark:text-[#3EE0A8] mt-1">
-            {isDeveloper ? "< 1 ms" : "Protected"}
-          </div>
-          <span className="text-[10px] text-zinc-400 font-mono">
-            {isDeveloper ? "pure deterministic engine" : "verified PayPal checkout"}
-          </span>
-        </Card>
-      </div>
-
-      {/* Main Charts: Spent vs Remaining & Decision Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Chart 1: Spent vs Remaining (Col 6) */}
-        <div className="lg:col-span-6">
-          <Card className="bg-white dark:bg-[#0D1C17] border-zinc-200/80 dark:border-[#1A332B] p-5 shadow-sm">
-            <CardHeader className="p-0 pb-4">
-              <CardTitle className="font-heading text-lg font-bold">
-                Spent vs Remaining Budget
-              </CardTitle>
-              <CardDescription className="text-xs text-zinc-500">
+        {/* 2 Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Chart 1: Donut Budget Breakdown */}
+          <div className="lg:col-span-6 rounded-3xl border border-[var(--approvals-line)] bg-[var(--approvals-card)] p-7 space-y-4 shadow-xs">
+            <div>
+              <h2 className="text-[18px] font-medium text-[var(--approvals-ink)]">
+                Spent vs remaining allowance
+              </h2>
+              <p className="text-[13px] text-[var(--approvals-mute)] mt-0.5">
                 Current active mandate allocation
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0 h-[280px]">
+              </p>
+            </div>
+
+            <div className="h-[260px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={budgetData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={70}
-                    outerRadius={105}
+                    innerRadius={65}
+                    outerRadius={95}
                     paddingAngle={4}
                     dataKey="value"
                   >
@@ -279,97 +246,89 @@ export default function AnalyticsPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(val: any) => [`$${val.toFixed(2)}`, "Amount"]}
+                    formatter={(val: any) => [`$${Number(val).toFixed(2)}`, ""]}
                     contentStyle={{
-                      backgroundColor: "#0D1C17",
-                      borderRadius: "8px",
-                      border: "1px solid #1A332B",
-                      color: "#fff",
-                      fontSize: "12px",
+                      backgroundColor: "var(--approvals-card)",
+                      borderColor: "var(--approvals-line)",
+                      borderRadius: "12px",
+                      color: "var(--approvals-ink)",
+                      fontSize: "13px",
                     }}
                   />
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
 
-        {/* Chart 2: Approved vs Blocked (Col 6) */}
-        <div className="lg:col-span-6">
-          <Card className="bg-white dark:bg-[#0D1C17] border-zinc-200/80 dark:border-[#1A332B] p-5 shadow-sm">
-            <CardHeader className="p-0 pb-4">
-              <CardTitle className="font-heading text-lg font-bold">
-                Decision Outcomes
-              </CardTitle>
-              <CardDescription className="text-xs text-zinc-500">
-                Approved PayPal charges vs Blocked Attacks & Escalations
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0 h-[280px]">
+            <div className="flex items-center justify-center gap-6 pt-2 border-t border-[var(--approvals-line)] text-[13px]">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#0b7a55]" />
+                <span className="text-[var(--approvals-mute)]">Spent:</span>
+                <span className="font-medium text-[var(--approvals-ink)]">
+                  ${(spentCents / 100).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#3fe0a0]" />
+                <span className="text-[var(--approvals-mute)]">Remaining:</span>
+                <span className="font-medium text-[var(--approvals-ink)]">
+                  ${(remainingCents / 100).toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Chart 2: Decisions Breakdown */}
+          <div className="lg:col-span-6 rounded-3xl border border-[var(--approvals-line)] bg-[var(--approvals-card)] p-7 space-y-4 shadow-xs">
+            <div>
+              <h2 className="text-[18px] font-medium text-[var(--approvals-ink)]">
+                Guard decision outcomes
+              </h2>
+              <p className="text-[13px] text-[var(--approvals-mute)] mt-0.5">
+                Distribution of order results handled by BERYL
+              </p>
+            </div>
+
+            <div className="h-[260px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={decisionData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+                <BarChart data={decisionData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
                   <XAxis
                     dataKey="name"
-                    tick={{ fontSize: 11 }}
-                    interval={0}
-                    tickFormatter={(val) => val.split(" ")[0]}
+                    stroke="var(--approvals-mute)"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
                   />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <YAxis
+                    stroke="var(--approvals-mute)"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                  />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#0D1C17",
-                      borderRadius: "8px",
-                      border: "1px solid #1A332B",
-                      color: "#fff",
-                      fontSize: "12px",
+                      backgroundColor: "var(--approvals-card)",
+                      borderColor: "var(--approvals-line)",
+                      borderRadius: "12px",
+                      color: "var(--approvals-ink)",
+                      fontSize: "13px",
                     }}
                   />
-                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="count" radius={[8, 8, 0, 0]}>
                     {decisionData.map((entry, index) => (
                       <Cell key={`bar-${index}`} fill={entry.fill} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
 
-      {/* Category Breakdown Card */}
-      <Card className="bg-white dark:bg-[#0D1C17] border-zinc-200/80 dark:border-[#1A332B] p-5 shadow-sm">
-        <CardHeader className="p-0 pb-4">
-          <CardTitle className="font-heading text-lg font-bold">
-            {isDeveloper ? "Spending by Product Category" : "Where Your Shopping Allowance Goes"}
-          </CardTitle>
-          <CardDescription className="text-xs text-zinc-500">
-            Purchases classified under your mandate's allowed shopping categories
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {categoryData.map((c) => (
-              <div
-                key={c.category}
-                className="p-4 rounded-xl border border-zinc-100 dark:border-[#1A332B] bg-zinc-50/50 dark:bg-[#07130F] flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">
-                    {c.category}
-                  </div>
-                  <div className="text-[10px] text-zinc-400 mt-0.5">
-                    Verified Purchases
-                  </div>
-                </div>
-                <div className="font-heading text-lg font-bold text-[#0B7A5A] dark:text-[#3EE0A8]">
-                  ${c.spent.toFixed(2)}
-                </div>
-              </div>
-            ))}
+            <div className="flex items-center justify-center gap-4 pt-2 border-t border-[var(--approvals-line)] text-[12px] text-[var(--approvals-mute)]">
+              <span>Automated PayPal Protection · 100% Policy Enforced</span>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </motion.div>
+    </ConsumerShell>
   );
 }
