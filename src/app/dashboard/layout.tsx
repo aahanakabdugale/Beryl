@@ -87,6 +87,17 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   const navItems = isDeveloper ? DEVELOPER_NAV : CONSUMER_NAV;
 
+  const isConsumerCustomShell = !isDeveloper;
+
+  if (isConsumerCustomShell) {
+    return (
+      <div className="min-h-screen bg-[var(--approvals-page)] text-[var(--approvals-ink)]">
+        <RealtimeListener />
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F3F7F5] dark:bg-[#07100D] flex flex-col md:flex-row text-zinc-900 dark:text-zinc-100">
       <RealtimeListener />
