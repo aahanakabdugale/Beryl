@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useViewMode } from "@/components/view-mode-context";
+import { BerylLogo } from "@/components/beryl-logo";
 import { toast } from "sonner";
 
 interface Mandate {
@@ -49,6 +50,8 @@ interface AuditLog {
   rule_code: string;
   reason?: string;
   paypal_order_id?: string;
+  approval_status?: string | null;
+  final_outcome?: string;
 }
 
 export default function DashboardOverview() {
@@ -56,6 +59,7 @@ export default function DashboardOverview() {
   const [mandates, setMandates] = useState<Mandate[]>([]);
   const [activeMandate, setActiveMandate] = useState<Mandate | null>(null);
   const [recentLogs, setRecentLogs] = useState<AuditLog[]>([]);
+  const [activityFilter, setActivityFilter] = useState<"all" | "purchased" | "pending" | "declined" | "blocked">("all");
   const [loading, setLoading] = useState(true);
   const [freezeLoading, setFreezeLoading] = useState(false);
 
@@ -139,6 +143,53 @@ export default function DashboardOverview() {
     ? new Date(activeMandate.expires_at).getTime() < Date.now()
     : false;
 
+  const purchasedCount = recentLogs.filter((l) => {
+    const finalOutcome = (l.final_outcome || "").toUpperCase();
+    const appStatus = (l.approval_status || "").toLowerCase();
+    const dec = (l.decision || "").toUpperCase();
+    return (finalOutcome === "COMPLETED" || Boolean(l.paypal_order_id) || dec === "APPROVE" || appStatus === "approved") && appStatus !== "rejected" && dec !== "BLOCK";
+  }).length;
+
+  const pendingCount = recentLogs.filter((l) => {
+    const dec = (l.decision || "").toUpperCase();
+    const appStatus = (l.approval_status || "").toLowerCase();
+    const finalOutcome = (l.final_outcome || "").toUpperCase();
+    return (dec === "NEEDS_APPROVAL" || finalOutcome === "PENDING_APPROVAL") && appStatus !== "rejected" && appStatus !== "approved";
+  }).length;
+
+  const declinedCount = recentLogs.filter((l) => {
+    const appStatus = (l.approval_status || "").toLowerCase();
+    const finalOutcome = (l.final_outcome || "").toUpperCase();
+    return appStatus === "rejected" || finalOutcome === "REJECTED_BY_USER";
+  }).length;
+
+  const blockedCount = recentLogs.filter((l) => {
+    const dec = (l.decision || "").toUpperCase();
+    const finalOutcome = (l.final_outcome || "").toUpperCase();
+    return dec === "BLOCK" || finalOutcome === "BLOCKED";
+  }).length;
+
+  const displayedLogs = recentLogs.filter((log) => {
+    if (activityFilter === "all") return true;
+    const dec = (log.decision || "").toUpperCase();
+    const appStatus = (log.approval_status || "").toLowerCase();
+    const finalOutcome = (log.final_outcome || "").toUpperCase();
+
+    if (activityFilter === "purchased") {
+      return (finalOutcome === "COMPLETED" || Boolean(log.paypal_order_id) || dec === "APPROVE" || appStatus === "approved") && appStatus !== "rejected" && dec !== "BLOCK";
+    }
+    if (activityFilter === "pending") {
+      return (dec === "NEEDS_APPROVAL" || finalOutcome === "PENDING_APPROVAL") && appStatus !== "rejected" && appStatus !== "approved";
+    }
+    if (activityFilter === "declined") {
+      return appStatus === "rejected" || finalOutcome === "REJECTED_BY_USER";
+    }
+    if (activityFilter === "blocked") {
+      return dec === "BLOCK" || finalOutcome === "BLOCKED";
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -186,8 +237,8 @@ export default function DashboardOverview() {
             <CardHeader className="pb-3 border-b border-zinc-100 dark:border-[#162E25]">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-[#152B23] flex items-center justify-center text-[#0B7A5A] dark:text-[#3EE0A8]">
-                    {isDeveloper ? <Shield className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
+                  <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-[#152B23] flex items-center justify-center p-1.5 shadow-xs border border-emerald-500/20">
+                    <BerylLogo size={26} />
                   </div>
                   <div>
                     <CardTitle className="font-heading text-lg font-bold">
@@ -402,12 +453,25 @@ export default function DashboardOverview() {
               {/* Consumer Card 2: Pending Approvals */}
               <Card className="bg-white dark:bg-[#0D1C17] border border-zinc-200/80 dark:border-[#1A332B]">
                 <CardHeader className="pb-2">
-                  <CardTitle className="font-heading text-lg font-bold flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                    <AlertTriangle className="h-5 w-5" />
-                    Order Approvals
-                  </CardTitle>
-                  <CardDescription className="text-zinc-500 dark:text-zinc-400 text-xs">
-                    Items found by your agent that exceed your auto-approve limit and need your green light.
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-heading text-lg font-bold flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                      <AlertTriangle className="h-5 w-5" />
+                      Order Approvals
+                    </CardTitle>
+                    {pendingCount > 0 ? (
+                      <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-xs font-semibold">
+                        {pendingCount} Pending
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-zinc-500 border-zinc-200 dark:border-zinc-800 text-[11px]">
+                        All clear
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription className="text-zinc-500 dark:text-zinc-400 text-xs mt-1">
+                    {pendingCount > 0
+                      ? `${pendingCount} item(s) found by your agent exceed your auto-approve limit and need your green light.`
+                      : "No orders waiting for your review. All pending requests have been decided."}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-2">
@@ -416,7 +480,7 @@ export default function DashboardOverview() {
                       variant="outline"
                       className="w-full border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-semibold text-xs h-9 rounded-lg gap-1.5 cursor-pointer"
                     >
-                      <span>Review Pending Orders</span>
+                      <span>{pendingCount > 0 ? "Review Pending Orders" : "View Approvals History"}</span>
                       <ArrowUpRight className="h-4 w-4" />
                     </Button>
                   </Link>
@@ -429,13 +493,15 @@ export default function DashboardOverview() {
 
       {/* Recent Decisions / Orders Section */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="font-heading text-xl font-bold tracking-tight">
               {isDeveloper ? "Recent Decisions" : "Recent Orders & Activity"}
             </h2>
             <p className="text-xs text-zinc-500">
-              {isDeveloper ? "Live guard execution record" : "Purchases and requests handled by your agent"}
+              {isDeveloper
+                ? "Live guard execution record across all evaluated agent requests"
+                : "Real-time record of all purchase requests evaluated by your policy guard"}
             </p>
           </div>
           {isDeveloper ? (
@@ -457,22 +523,92 @@ export default function DashboardOverview() {
           )}
         </div>
 
+        {/* Quick Filter Pills */}
+        {recentLogs.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+            <button
+              onClick={() => setActivityFilter("all")}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                activityFilter === "all"
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+            >
+              All Activity ({recentLogs.length})
+            </button>
+            <button
+              onClick={() => setActivityFilter("purchased")}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                activityFilter === "purchased"
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-[#3EE0A8] hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
+              }`}
+            >
+              {isDeveloper ? `Approved (${purchasedCount})` : `Purchased (${purchasedCount})`}
+            </button>
+            {pendingCount > 0 && (
+              <button
+                onClick={() => setActivityFilter("pending")}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                  activityFilter === "pending"
+                    ? "bg-amber-600 text-white shadow-xs"
+                    : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+                }`}
+              >
+                {isDeveloper ? `Needs Approval (${pendingCount})` : `Waiting for Review (${pendingCount})`}
+              </button>
+            )}
+            {declinedCount > 0 && (
+              <button
+                onClick={() => setActivityFilter("declined")}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                  activityFilter === "declined"
+                    ? "bg-rose-600 text-white shadow-xs"
+                    : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50"
+                }`}
+              >
+                {isDeveloper ? `Declined (${declinedCount})` : `Declined by You (${declinedCount})`}
+              </button>
+            )}
+            <button
+              onClick={() => setActivityFilter("blocked")}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                activityFilter === "blocked"
+                  ? "bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900 shadow-xs"
+                  : "bg-zinc-100 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+            >
+              {isDeveloper ? `Blocked (${blockedCount})` : `Stopped by Guard (${blockedCount})`}
+            </button>
+          </div>
+        )}
+
         <div className="bg-white dark:bg-[#0D1C17] border border-zinc-200/80 dark:border-[#1A332B] rounded-2xl overflow-hidden shadow-xs">
-          {recentLogs.length === 0 ? (
+          {displayedLogs.length === 0 ? (
             <div className="p-8 text-center text-xs text-zinc-500">
-              {isDeveloper
-                ? "No transactions recorded yet. Launch the AI Shopper Agent or Attack Lab to simulate requests!"
-                : "No shopping orders yet. Start a chat with your AI Shopper to find and buy items!"}
+              {recentLogs.length === 0
+                ? isDeveloper
+                  ? "No transactions recorded yet. Launch the AI Shopper Agent or Attack Lab to simulate requests!"
+                  : "No shopping orders yet. Start a chat with your AI Shopper to find and buy items!"
+                : `No activity found for this filter.`}
             </div>
           ) : (
             <div className="divide-y divide-zinc-100 dark:divide-[#162E25]">
-              {recentLogs.map((log) => {
+              {displayedLogs.map((log) => {
                 const dec = (log.decision || "").toUpperCase();
-                const isApprove = dec === "APPROVE";
-                const isNeedsApproval = dec === "NEEDS_APPROVAL";
-                const isBlock = dec === "BLOCK";
+                const appStatus = (log.approval_status || "").toLowerCase();
+                const finalOutcome = (log.final_outcome || "").toUpperCase();
+
+                const isDeclined = appStatus === "rejected" || finalOutcome === "REJECTED_BY_USER";
+                const isApprovedByUser = appStatus === "approved" || finalOutcome === "APPROVED_BY_USER";
+                const isPendingApproval = (dec === "NEEDS_APPROVAL" || finalOutcome === "PENDING_APPROVAL") && !isDeclined && !isApprovedByUser;
+                const isAutoApproved = dec === "APPROVE" || finalOutcome === "APPROVED";
+                const isPaid = (finalOutcome === "COMPLETED" || Boolean(log.paypal_order_id) || isAutoApproved || isApprovedByUser) && !isDeclined && dec !== "BLOCK";
+                const isBlock = dec === "BLOCK" || finalOutcome === "BLOCKED";
 
                 const getFriendlyReason = (code: string) => {
+                  if (isDeclined) return "Declined by you in order reviews";
+                  if (isApprovedByUser) return "Approved by you • Verified checkout";
                   if (code.includes("APPROVAL") || code.includes("THRESHOLD") || code.includes("ASK")) {
                     return "Requires your approval";
                   }
@@ -491,16 +627,20 @@ export default function DashboardOverview() {
                     <div className="flex items-center gap-3">
                       <div
                         className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
-                          isApprove
+                          isPaid
                             ? "bg-emerald-100/70 text-emerald-700 dark:bg-emerald-950 dark:text-[#3EE0A8]"
-                            : isNeedsApproval
+                            : isDeclined
+                            ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                            : isPendingApproval
                             ? "bg-amber-100/70 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
                             : "bg-rose-100/70 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
                         }`}
                       >
-                        {isApprove ? (
+                        {isPaid ? (
                           <CheckCircle2 className="h-4 w-4" />
-                        ) : isNeedsApproval ? (
+                        ) : isDeclined ? (
+                          <XCircle className="h-4 w-4" />
+                        ) : isPendingApproval ? (
                           <AlertTriangle className="h-4 w-4" />
                         ) : (
                           <XCircle className="h-4 w-4" />
@@ -525,24 +665,35 @@ export default function DashboardOverview() {
                           ${(log.amount_cents / 100).toFixed(2)}
                         </div>
                         <div className="text-[10px] text-zinc-400">
-                          {isDeveloper ? log.rule_code : getFriendlyReason(log.rule_code)}
+                          {isDeveloper
+                            ? isDeclined
+                              ? "REJECTED_BY_USER"
+                              : isApprovedByUser
+                              ? "APPROVED_BY_USER"
+                              : log.rule_code
+                            : getFriendlyReason(log.rule_code)}
                         </div>
                       </div>
 
                       <div>
                         {isDeveloper ? (
                           <>
-                            {isApprove && (
+                            {isPaid && (
                               <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-[#3EE0A8] text-[10px] font-mono">
-                                APPROVED
+                                {isApprovedByUser ? "APPROVED (MANUAL)" : "APPROVED"}
                               </Badge>
                             )}
-                            {isNeedsApproval && (
+                            {isDeclined && (
+                              <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-mono">
+                                REJECTED BY USER
+                              </Badge>
+                            )}
+                            {isPendingApproval && (
                               <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-mono">
                                 NEEDS APPROVAL
                               </Badge>
                             )}
-                            {isBlock && (
+                            {isBlock && !isDeclined && (
                               <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-mono">
                                 BLOCKED
                               </Badge>
@@ -550,17 +701,22 @@ export default function DashboardOverview() {
                           </>
                         ) : (
                           <>
-                            {isApprove && (
+                            {isPaid && (
                               <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-[#3EE0A8] text-[10px] font-medium">
-                                PAID (PAYPAL)
+                                {isApprovedByUser ? "PAID (APPROVED)" : "PAID (PAYPAL)"}
                               </Badge>
                             )}
-                            {isNeedsApproval && (
+                            {isDeclined && (
+                              <Badge className="bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 text-[10px] font-medium border border-zinc-200 dark:border-zinc-700">
+                                DECLINED BY YOU
+                              </Badge>
+                            )}
+                            {isPendingApproval && (
                               <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-medium">
                                 WAITING FOR YOU
                               </Badge>
                             )}
-                            {isBlock && (
+                            {isBlock && !isDeclined && (
                               <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-[10px] font-medium">
                                 STOPPED BY LIMIT
                               </Badge>
