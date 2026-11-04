@@ -91,6 +91,34 @@
   --sidebar-accent-foreground: #0B7A5A;
   --sidebar-border: #DFE8E3;
   --sidebar-ring: #0B7A5A;
+
+  /* Consumer Theme Tokens (Wallet & Budget) */
+  --consumer-page: #f3f8f5;
+  --consumer-card: #ffffff;
+  --consumer-side: #ffffff;
+  --consumer-ink: #12261c;
+  --consumer-mute: #6b8176;
+  --consumer-line: #e4ede8;
+  --consumer-soft: #e6f4ec;
+  --consumer-brand: #0b7a55;
+  --consumer-amber: #b87400;
+  --consumer-amber-bg: #fff6e0;
+  --consumer-red: #d93a52;
+  --consumer-red-bg: #fff0f2;
+
+  /* Approvals Theme Tokens */
+  --approvals-page: #f3f8f5;
+  --approvals-card: #ffffff;
+  --approvals-ink: #0f2219;
+  --approvals-mute: #6b8176;
+  --approvals-line: #e2ebe6;
+  --approvals-soft: #e6f4ec;
+  --approvals-brand: #0b7a55;
+  --approvals-accent: #0b7a55;
+  --approvals-amber: #b87400;
+  --approvals-amber-bg: #fff6e0;
+  --approvals-red: #d93a52;
+  --approvals-red-bg: #fff0f2;
 }
 
 .dark {
@@ -131,6 +159,34 @@
   --sidebar-accent-foreground: #3EE0A8;
   --sidebar-border: #183329;
   --sidebar-ring: #3EE0A8;
+
+  /* Consumer Theme Tokens (Wallet & Budget) */
+  --consumer-page: #060f0b;
+  --consumer-card: #0b1712;
+  --consumer-side: #08130e;
+  --consumer-ink: #eaf5ef;
+  --consumer-mute: #80998b;
+  --consumer-line: #15271e;
+  --consumer-soft: #0f2a1e;
+  --consumer-brand: #3fe0a0;
+  --consumer-amber: #f3b33d;
+  --consumer-amber-bg: #1b1608;
+  --consumer-red: #ff5d75;
+  --consumer-red-bg: #1d0c10;
+
+  /* Approvals Theme Tokens (Dark) */
+  --approvals-page: #060f0b;
+  --approvals-card: #0a1611;
+  --approvals-ink: #eaf5ef;
+  --approvals-mute: #7f9a8c;
+  --approvals-line: #14271e;
+  --approvals-soft: #0f2a1e;
+  --approvals-brand: #0b7a55;
+  --approvals-accent: #3fe0a0;
+  --approvals-amber: #f3b33d;
+  --approvals-amber-bg: #17130a;
+  --approvals-red: #ff5d75;
+  --approvals-red-bg: #1d0c10;
 }
 
 @layer base {
