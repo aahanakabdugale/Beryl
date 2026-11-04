@@ -3,6 +3,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 
 const PROTECTED_PREFIXES = [
   "/dashboard",
+  "/consumer",
   "/mandates",
   "/agent",
   "/approvals",
