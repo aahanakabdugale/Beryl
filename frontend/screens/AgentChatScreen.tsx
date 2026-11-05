@@ -15,6 +15,7 @@ import {
 import { ConsumerShell } from "@/frontend/components/ConsumerShell";
 import { BerylLogo } from "@/components/beryl-logo";
 import { useViewMode } from "@/components/view-mode-context";
+import { useInspector } from "@/components/inspector-context";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -232,6 +233,7 @@ function ChatMessageContent({
 
 export default function AgentChatPage() {
   const { isDeveloper } = useViewMode();
+  const { inspectData } = useInspector();
   const [isChatEnlarged, setIsChatEnlarged] = useState(false);
   const [activeMandate, setActiveMandate] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([
@@ -331,6 +333,30 @@ export default function AgentChatPage() {
 
       setActiveTimeline(steps);
 
+      if (paymentRequests.length > 0) {
+        const pr = paymentRequests[0];
+        inspectData("AGENT_PAYMENT_REQUEST", {
+          item: pr.item,
+          amount: (pr.amount_cents || 0) / 100,
+          merchant: pr.merchant || pr.merchant_domain || "Merchant",
+          decision: pr.decision?.outcome || "APPROVE",
+          rule_code: pr.decision?.rule_code || "AUTO_APPROVE",
+          reason: pr.decision?.reason || "Within mandate limits",
+          latency_ms: pr.decision?.latency_ms || 0,
+          paypal_status: pr.payment?.status || (pr.decision?.outcome === "needs_approval" ? "PENDING_APPROVAL" : "MOCK_EXECUTED"),
+        });
+      } else if (steps.length > 0) {
+        inspectData("AGENT_TOOL_STEPS", {
+          total_steps: steps.length,
+          last_tool: steps[steps.length - 1]?.tool,
+          steps_summary: steps.map((s: any) => ({
+            tool: s.tool,
+            status: s.status,
+            latency_ms: s.latency_ms || 0,
+          })),
+        });
+      }
+
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         sender: "agent",
@@ -357,22 +383,13 @@ export default function AgentChatPage() {
     }
   };
 
-  return (
-    <ConsumerShell
-      activePath="/dashboard/agent"
-      maxWidth={isChatEnlarged ? "max-w-[1360px]" : "max-w-[1140px]"}
-      compactPadding={true}
-      title="Shop with agent"
-      description="Tell your shopper what to look for. It only buys within your rules."
-      isSidebarMinimized={isChatEnlarged}
-      onToggleSidebar={() => setIsChatEnlarged(!isChatEnlarged)}
+  const chatBody = (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-3.5"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="space-y-3.5"
-      >
         {/* Suggested Presets */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[12px] font-mono uppercase tracking-[0.1em] text-[var(--approvals-mute)]">
@@ -415,30 +432,9 @@ export default function AgentChatPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setIsChatEnlarged(!isChatEnlarged)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--approvals-line)] bg-[var(--approvals-page)] text-[12px] font-medium text-[var(--approvals-ink)] hover:border-[var(--approvals-brand)] transition-colors cursor-pointer"
-                    title={isChatEnlarged ? "Collapse to standard view" : "Minimize sidebar & enlarge chat to full width"}
-                  >
-                    {isChatEnlarged ? (
-                      <>
-                        <Minimize2 className="h-3.5 w-3.5 text-[var(--approvals-brand)]" />
-                        <span>Compact view</span>
-                      </>
-                    ) : (
-                      <>
-                        <Maximize2 className="h-3.5 w-3.5 text-[var(--approvals-brand)]" />
-                        <span>Enlarge chat</span>
-                      </>
-                    )}
-                  </button>
-
-                  <div className="flex items-center gap-2 text-[12px] text-[var(--approvals-brand)] dark:text-[var(--approvals-accent)] font-medium">
-                    <span className="w-2 h-2 rounded-full bg-[var(--approvals-brand)] dark:bg-[var(--approvals-accent)] animate-pulse" />
-                    <span>Active</span>
-                  </div>
+                <div className="flex items-center gap-2 text-[12px] text-[var(--approvals-brand)] dark:text-[var(--approvals-accent)] font-medium">
+                  <span className="w-2 h-2 rounded-full bg-[var(--approvals-brand)] dark:bg-[var(--approvals-accent)] animate-pulse" />
+                  <span>Active</span>
                 </div>
               </div>
 
@@ -643,6 +639,41 @@ export default function AgentChatPage() {
           )}
         </div>
       </motion.div>
+    );
+
+  if (isDeveloper) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-200/80 dark:border-[#1A332B]">
+          <div className="flex items-center gap-2">
+            <h1 className="font-heading text-lg font-bold tracking-tight">
+              Agent Execution & Tracing
+            </h1>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-[#3EE0A8] border border-emerald-500/20 font-bold">
+              LIVE RUNTIME
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Air-Gap Active</span>
+          </div>
+        </div>
+        {chatBody}
+      </div>
+    );
+  }
+
+  return (
+    <ConsumerShell
+      activePath="/dashboard/agent"
+      maxWidth={isChatEnlarged ? "max-w-[1360px]" : "max-w-[1140px]"}
+      compactPadding={true}
+      title="Shop with agent"
+      description="Tell your shopper what to look for. It only buys within your rules."
+      isSidebarMinimized={isChatEnlarged}
+      onToggleSidebar={() => setIsChatEnlarged(!isChatEnlarged)}
+    >
+      {chatBody}
     </ConsumerShell>
   );
 }
