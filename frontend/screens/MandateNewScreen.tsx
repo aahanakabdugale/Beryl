@@ -382,6 +382,27 @@ export default function MandateSetupPage() {
     </motion.div>
   );
 
+  if (isDeveloper) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-200/80 dark:border-[#1A332B]">
+          <div>
+            <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Policy & Mandate Constraints
+            </h1>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Configure deterministic parameters: total budget, per-purchase ceiling, escalation thresholds, and allowed categories
+            </p>
+          </div>
+          <span className="font-mono text-xs uppercase tracking-wider text-emerald-600 dark:text-[#3EE0A8] px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10">
+            Step {step} of 3
+          </span>
+        </div>
+        {content}
+      </div>
+    );
+  }
+
   return (
     <ConsumerShell
       activePath="/dashboard/mandates/new"
