@@ -13,9 +13,17 @@ import {
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
+  Wallet,
+  Bot,
+  CheckSquare,
+  SlidersHorizontal,
+  BarChart3,
+  User,
+  ShieldCheck,
+  History,
+  Home,
 } from "lucide-react";
 import { BerylLogo } from "@/components/beryl-logo";
-import { ModeSwitcher } from "@/components/mode-switcher";
 import { createClient } from "@/lib/supabase/browser";
 import { toast } from "sonner";
 
@@ -47,19 +55,46 @@ export function ConsumerShell({
   const pathname = usePathname();
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [localSidebarCollapsed, setLocalSidebarCollapsed] = useState(false);
   const [userName, setUserName] = useState("Aahana");
+  const [userEmail, setUserEmail] = useState("aahana.kabdugale@gmail.com");
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [internalPendingCount, setInternalPendingCount] = useState<number>(0);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Initialize collapse state from localStorage if available
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("beryl_sidebar_collapsed");
+      if (stored !== null) {
+        setLocalSidebarCollapsed(stored === "true");
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const isCollapsed = isSidebarMinimized !== undefined ? isSidebarMinimized : localSidebarCollapsed;
+
   const toggleSidebar = () => {
     if (onToggleSidebar) {
       onToggleSidebar();
     } else {
-      setLocalSidebarCollapsed(!localSidebarCollapsed);
+      setLocalSidebarCollapsed((prev) => {
+        const next = !prev;
+        try {
+          localStorage.setItem("beryl_sidebar_collapsed", String(next));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
     }
   };
 
@@ -86,21 +121,43 @@ export function ConsumerShell({
     loadPendingCount();
   }, [propPendingCount]);
 
-  // Load user name
-  useEffect(() => {
-    async function getUserName() {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.email) {
-          const first = user.email.split("@")[0].split(".")[0];
-          setUserName(first.charAt(0).toUpperCase() + first.slice(1));
-        }
-      } catch {
-        // fallback
+  // Load user name & check custom profile from localStorage or Supabase
+  const loadProfile = async () => {
+    try {
+      const savedProfile = localStorage.getItem("beryl_user_profile");
+      if (savedProfile) {
+        const parsed = JSON.parse(savedProfile);
+        if (parsed.name) setUserName(parsed.name);
+        if (parsed.email) setUserEmail(parsed.email);
+        return;
       }
+    } catch {
+      // ignore
     }
-    getUserName();
+
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+        const first = user.email.split("@")[0].split(".")[0];
+        setUserName(first.charAt(0).toUpperCase() + first.slice(1));
+      }
+    } catch {
+      // fallback
+    }
+  };
+
+  useEffect(() => {
+    loadProfile();
+
+    const handleProfileUpdate = () => {
+      loadProfile();
+    };
+    window.addEventListener("beryl_profile_updated", handleProfileUpdate);
+    return () => {
+      window.removeEventListener("beryl_profile_updated", handleProfileUpdate);
+    };
   }, []);
 
   const handleSignOut = async () => {
@@ -122,14 +179,49 @@ export function ConsumerShell({
   const isApprovalsActive = currentPath === "/dashboard/approvals" || currentPath === "/consumer/approvals";
   const isRulesActive = currentPath === "/dashboard/mandates/new" || currentPath === "/consumer/rules";
   const isAnalyticsActive = currentPath === "/dashboard/analytics" || currentPath === "/consumer/analytics";
+  const isAccountActive = currentPath === "/dashboard/account" || currentPath === "/consumer/account";
+
+  const navItems = [
+    {
+      label: "Wallet & Budget",
+      href: "/dashboard",
+      icon: Wallet,
+      isActive: isWalletActive,
+    },
+    {
+      label: "Shop with agent",
+      href: "/dashboard/agent",
+      icon: Bot,
+      isActive: isAgentActive,
+    },
+    {
+      label: "Pending approvals",
+      href: "/dashboard/approvals",
+      icon: CheckSquare,
+      isActive: isApprovalsActive,
+      badge: pendingBadge,
+    },
+    {
+      label: "Spending rules",
+      href: "/dashboard/mandates/new",
+      icon: SlidersHorizontal,
+      isActive: isRulesActive,
+    },
+    {
+      label: "Spending analytics",
+      href: "/dashboard/analytics",
+      icon: BarChart3,
+      isActive: isAnalyticsActive,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-[var(--approvals-page)] text-[var(--approvals-ink)] font-[family-name:var(--font-space-grotesk)] flex selection:bg-emerald-500/20">
       {/* ============================================================== */}
-      {/* 236px Fixed Sidebar                                             */}
+      {/* EXPANDED DESKTOP SIDEBAR (w-[236px]) or MOBILE DRAWER          */}
       {/* ============================================================== */}
       <aside
-        className={`fixed left-0 top-0 bottom-0 w-[236px] bg-[var(--approvals-card)] border-r border-[var(--approvals-line)] p-6 flex flex-col justify-between z-40 transition-transform duration-200 ${
+        className={`fixed left-0 top-0 bottom-0 w-[236px] bg-[var(--approvals-card)] border-r border-[var(--approvals-line)] p-5 flex flex-col justify-between z-40 transition-transform duration-200 ${
           mobileDrawerOpen
             ? "translate-x-0"
             : isCollapsed
@@ -137,7 +229,7 @@ export function ConsumerShell({
             : "-translate-x-full [@media(min-width:980px)]:translate-x-0"
         }`}
       >
-        <div className="space-y-8">
+        <div className="space-y-7">
           {/* Logo row (28px gem tile + BERYL Space Grotesk 700 tracking .05em) */}
           <div className="flex items-center justify-between">
             <Link
@@ -155,148 +247,300 @@ export function ConsumerShell({
                 type="button"
                 onClick={toggleSidebar}
                 className="hidden [@media(min-width:980px)]:flex p-1.5 rounded-lg text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] transition-colors cursor-pointer"
-                title="Minimize sidebar"
+                title="Minimize sidebar to thin view"
+                aria-label="Minimize sidebar"
               >
                 <PanelLeftClose className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setMobileDrawerOpen(false)}
-                className="[@media(min-width:980px)]:hidden p-1 text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)]"
+                className="[@media(min-width:980px)]:hidden p-1 text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] cursor-pointer"
+                aria-label="Close menu"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
           </div>
 
-          {/* Plain text links */}
-          <nav className="space-y-1 flex flex-col">
-            <Link
-              href="/dashboard"
-              className={`px-4 py-2.5 text-[15px] rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] ${
-                isWalletActive
-                  ? "bg-[var(--approvals-soft)] text-[var(--approvals-accent)] font-medium"
-                  : "text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] font-normal"
-              }`}
-            >
-              Wallet & Budget
-            </Link>
-
-            <Link
-              href="/dashboard/agent"
-              className={`px-4 py-2.5 text-[15px] rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] ${
-                isAgentActive
-                  ? "bg-[var(--approvals-soft)] text-[var(--approvals-accent)] font-medium"
-                  : "text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] font-normal"
-              }`}
-            >
-              Shop with agent
-            </Link>
-
-            <Link
-              href="/dashboard/approvals"
-              className={`px-4 py-2.5 text-[15px] rounded-xl flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] ${
-                isApprovalsActive
-                  ? "bg-[var(--approvals-soft)] text-[var(--approvals-accent)] font-medium"
-                  : "text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] font-normal"
-              }`}
-            >
-              <span>Pending approvals</span>
-              {pendingBadge > 0 && (
-                <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-[var(--approvals-amber)] text-white text-[11px] font-bold flex items-center justify-center">
-                  {pendingBadge}
-                </span>
-              )}
-            </Link>
-
-            <Link
-              href="/dashboard/mandates/new"
-              className={`px-4 py-2.5 text-[15px] rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] ${
-                isRulesActive
-                  ? "bg-[var(--approvals-soft)] text-[var(--approvals-accent)] font-medium"
-                  : "text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] font-normal"
-              }`}
-            >
-              Spending rules
-            </Link>
-
-            <Link
-              href="/dashboard/analytics"
-              className={`px-4 py-2.5 text-[15px] rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] ${
-                isAnalyticsActive
-                  ? "bg-[var(--approvals-soft)] text-[var(--approvals-accent)] font-medium"
-                  : "text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] font-normal"
-              }`}
-            >
-              Spending analytics
-            </Link>
+          {/* Navigation Links with Sensible Logos */}
+          <nav className="space-y-1.5 flex flex-col">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileDrawerOpen(false)}
+                  className={`flex items-center gap-3 px-3.5 py-2.5 text-[14.5px] rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] ${
+                    item.isActive
+                      ? "bg-[var(--approvals-soft)] text-[var(--approvals-accent)] font-semibold shadow-xs"
+                      : "text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)]/70 font-normal"
+                  }`}
+                >
+                  <Icon className={`h-4 w-4 shrink-0 ${item.isActive ? "text-[var(--approvals-accent)]" : "text-[var(--approvals-mute)]"}`} />
+                  <span className="truncate flex-1">{item.label}</span>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-[var(--approvals-amber)] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
-        {/* Sidebar Bottom: Account Chip with Menu & Theme Toggle */}
-        <div className="pt-4 border-t border-[var(--approvals-line)] flex items-center justify-between gap-2 relative">
-          {/* Account Chip */}
-          <div className="relative flex-1 min-w-0">
+        {/* Sidebar Bottom: Account Card with Menu & Theme Toggle */}
+        <div className="pt-3.5 border-t border-[var(--approvals-line)] space-y-2 relative">
+          <div className="flex items-center justify-between gap-1.5">
+            {/* Account Chip Button */}
+            <div className="relative flex-1 min-w-0">
+              <button
+                type="button"
+                onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                className={`w-full flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-[var(--approvals-page)] transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] cursor-pointer ${
+                  isAccountActive ? "bg-[var(--approvals-soft)]/50 ring-1 ring-[var(--approvals-accent)]/30" : ""
+                }`}
+                title="Account options"
+              >
+                <div className="w-8 h-8 rounded-full bg-[var(--approvals-soft)] text-[var(--approvals-accent)] font-bold text-xs flex items-center justify-center shrink-0 border border-[var(--approvals-accent)]/20 shadow-xs">
+                  {userName.charAt(0)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-medium text-[var(--approvals-ink)] truncate leading-tight">
+                    {userName}
+                  </div>
+                  <div className="text-[11px] text-[var(--approvals-mute)] leading-tight flex items-center gap-1">
+                    <span>Consumer</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 inline-block" />
+                  </div>
+                </div>
+                <ChevronDown className="h-3.5 w-3.5 text-[var(--approvals-mute)] shrink-0 mr-1" />
+              </button>
+
+              {/* Account Dropdown Menu */}
+              {accountMenuOpen && (
+                <div className="absolute bottom-12 left-0 w-52 bg-[var(--approvals-card)] border border-[var(--approvals-line)] rounded-xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-2.5 py-1.5 border-b border-[var(--approvals-line)] mb-1">
+                    <p className="text-[12px] font-semibold text-[var(--approvals-ink)] truncate">{userName}</p>
+                    <p className="text-[11px] text-[var(--approvals-mute)] truncate">{userEmail}</p>
+                  </div>
+
+                  <Link
+                    href="/dashboard/account"
+                    onClick={() => setAccountMenuOpen(false)}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[12.5px] text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] rounded-lg transition-colors cursor-pointer"
+                  >
+                    <User className="h-3.5 w-3.5 text-[var(--approvals-accent)]" />
+                    <div className="flex-1">
+                      <span className="font-medium block">Account page</span>
+                      <span className="text-[10px] text-[var(--approvals-mute)] block">Update data & see history</span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/"
+                    onClick={() => setAccountMenuOpen(false)}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[12px] text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Home className="h-3.5 w-3.5" />
+                    <span>Back to Landing Page</span>
+                  </Link>
+
+                  <div className="my-1 border-t border-[var(--approvals-line)]" />
+
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[12px] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Theme Toggle Icon Button */}
             <button
-              onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-              className="w-full flex items-center gap-2.5 p-1.5 rounded-2xl hover:bg-[var(--approvals-page)] transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] cursor-pointer"
+              type="button"
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              className="w-8 h-8 rounded-xl border border-[var(--approvals-line)] flex items-center justify-center text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] cursor-pointer shrink-0"
+              aria-label="Toggle dark mode"
+              title="Toggle theme"
             >
-              <div className="w-8 h-8 rounded-full bg-[var(--approvals-soft)] text-[var(--approvals-accent)] font-bold text-xs flex items-center justify-center shrink-0">
-                {userName.charAt(0)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-medium text-[var(--approvals-ink)] truncate leading-tight">
-                  {userName}
-                </div>
-                <div className="text-[11px] text-[var(--approvals-mute)] leading-tight">
-                  Consumer
-                </div>
-              </div>
-              <ChevronDown className="h-3 w-3 text-[var(--approvals-mute)] shrink-0 mr-1" />
+              {mounted && resolvedTheme === "dark" ? (
+                <Sun className="h-3.5 w-3.5 text-amber-400" />
+              ) : (
+                <Moon className="h-3.5 w-3.5 text-[var(--approvals-mute)]" />
+              )}
             </button>
-
-            {/* Dropdown Menu */}
-            {accountMenuOpen && (
-              <div className="absolute bottom-12 left-0 w-48 bg-[var(--approvals-card)] border border-[var(--approvals-line)] rounded-xl shadow-lg p-1.5 z-50">
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            )}
           </div>
-
-          {/* Theme Toggle Icon Button */}
-          <button
-            type="button"
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className="w-8 h-8 rounded-full border border-[var(--approvals-line)] flex items-center justify-center text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] cursor-pointer shrink-0"
-            aria-label="Toggle dark mode"
-          >
-            {resolvedTheme === "dark" ? (
-              <Sun className="h-3.5 w-3.5 text-amber-400" />
-            ) : (
-              <Moon className="h-3.5 w-3.5 text-[var(--approvals-mute)]" />
-            )}
-          </button>
         </div>
       </aside>
+
+      {/* ============================================================== */}
+      {/* THIN DESKTOP SIDEBAR (w-[72px] rail when collapsed)            */}
+      {/* ============================================================== */}
+      {isCollapsed && (
+        <aside
+          className="hidden [@media(min-width:980px)]:flex fixed left-0 top-0 bottom-0 w-[72px] bg-[var(--approvals-card)] border-r border-[var(--approvals-line)] py-5 px-2 flex-col justify-between items-center z-40 transition-all duration-200"
+          aria-label="Collapsed navigation rail"
+        >
+          {/* Top: Logo & Expand toggle */}
+          <div className="flex flex-col items-center gap-4 w-full">
+            <Link
+              href="/"
+              title="BERYL"
+              className="p-1 rounded-lg hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)]"
+            >
+              <BerylLogo size={28} />
+            </Link>
+
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className="p-2 rounded-xl text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] transition-colors cursor-pointer"
+              title="Expand sidebar"
+              aria-label="Expand sidebar"
+            >
+              <PanelLeftOpen className="h-4 w-4 text-[var(--approvals-brand)]" />
+            </button>
+
+            <div className="w-8 h-[1px] bg-[var(--approvals-line)]" />
+
+            {/* Navigation Logos in Thin Sidebar */}
+            <nav className="flex flex-col items-center gap-2 w-full">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={item.label}
+                    className={`relative w-11 h-11 rounded-xl flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] group ${
+                      item.isActive
+                        ? "bg-[var(--approvals-soft)] text-[var(--approvals-accent)] shadow-xs ring-1 ring-[var(--approvals-accent)]/20"
+                        : "text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)]"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {item.badge !== undefined && item.badge > 0 && (
+                      <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-[var(--approvals-amber)] text-white text-[10px] font-bold flex items-center justify-center shadow-xs">
+                        {item.badge}
+                      </span>
+                    )}
+
+                    {/* Hover tooltip label */}
+                    <span className="absolute left-[78px] bg-[var(--approvals-card)] border border-[var(--approvals-line)] text-[var(--approvals-ink)] text-[12px] font-medium px-2.5 py-1 rounded-lg shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                      {item.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Bottom of Thin Sidebar: Account Avatar & Theme Toggle */}
+          <div className="flex flex-col items-center gap-3 w-full relative">
+            <div className="w-8 h-[1px] bg-[var(--approvals-line)]" />
+
+            {/* Account Icon Button */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                title={`${userName} (Account)`}
+                className={`w-9 h-9 rounded-full bg-[var(--approvals-soft)] text-[var(--approvals-accent)] font-bold text-xs flex items-center justify-center border border-[var(--approvals-accent)]/25 hover:ring-2 hover:ring-[var(--approvals-brand)] transition-all cursor-pointer ${
+                  isAccountActive ? "ring-2 ring-[var(--approvals-accent)]" : ""
+                }`}
+              >
+                {userName.charAt(0)}
+              </button>
+
+              {/* Account Dropdown in Thin Rail */}
+              {accountMenuOpen && (
+                <div className="absolute bottom-0 left-[68px] w-52 bg-[var(--approvals-card)] border border-[var(--approvals-line)] rounded-xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-2.5 py-1.5 border-b border-[var(--approvals-line)] mb-1">
+                    <p className="text-[12px] font-semibold text-[var(--approvals-ink)] truncate">{userName}</p>
+                    <p className="text-[11px] text-[var(--approvals-mute)] truncate">{userEmail}</p>
+                  </div>
+
+                  <Link
+                    href="/dashboard/account"
+                    onClick={() => setAccountMenuOpen(false)}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[12.5px] text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] rounded-lg transition-colors cursor-pointer"
+                  >
+                    <User className="h-3.5 w-3.5 text-[var(--approvals-accent)]" />
+                    <div className="flex-1">
+                      <span className="font-medium block">Account page</span>
+                      <span className="text-[10px] text-[var(--approvals-mute)] block">Update data & see history</span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/"
+                    onClick={() => setAccountMenuOpen(false)}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[12px] text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Home className="h-3.5 w-3.5" />
+                    <span>Back to Landing Page</span>
+                  </Link>
+
+                  <div className="my-1 border-t border-[var(--approvals-line)]" />
+
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[12px] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              className="w-8 h-8 rounded-xl border border-[var(--approvals-line)] flex items-center justify-center text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] cursor-pointer"
+              title="Toggle theme"
+            >
+              {mounted && resolvedTheme === "dark" ? (
+                <Sun className="h-3.5 w-3.5 text-amber-400" />
+              ) : (
+                <Moon className="h-3.5 w-3.5 text-[var(--approvals-mute)]" />
+              )}
+            </button>
+          </div>
+        </aside>
+      )}
 
       {/* Backdrop for mobile drawer */}
       {mobileDrawerOpen && (
         <div
           onClick={() => setMobileDrawerOpen(false)}
-          className="fixed inset-0 bg-black/40 z-30 [@media(min-width:980px)]:hidden"
+          className="fixed inset-0 bg-black/40 z-30 [@media(min-width:980px)]:hidden animate-in fade-in duration-150"
         />
       )}
 
       {/* ============================================================== */}
       {/* Main Content Area                                              */}
       {/* ============================================================== */}
-      <main className={`flex-1 min-w-0 transition-all duration-200 ${isCollapsed ? "pl-0" : "[@media(min-width:980px)]:pl-[236px]"} flex justify-center min-h-screen`}>
-        <div className={`w-full ${isCollapsed ? "max-w-[1340px]" : maxWidth} px-5 sm:px-10 ${compactPadding ? "py-4 sm:py-5 space-y-3.5" : "py-6 sm:py-8 space-y-6"}`}>
+      <main
+        className={`flex-1 min-w-0 transition-all duration-200 ${
+          isCollapsed
+            ? "[@media(min-width:980px)]:pl-[72px]"
+            : "[@media(min-width:980px)]:pl-[236px]"
+        } flex justify-center min-h-screen`}
+      >
+        <div
+          className={`w-full ${
+            isCollapsed ? "max-w-[1300px]" : maxWidth
+          } px-5 sm:px-10 ${
+            compactPadding ? "py-4 sm:py-5 space-y-3.5" : "py-6 sm:py-8 space-y-6"
+          }`}
+        >
           {/* Header Row: Title on Left, Mode Switcher & Actions on Right */}
           {title ? (
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -304,23 +548,11 @@ export function ConsumerShell({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setMobileDrawerOpen(true)}
-                    className="[@media(min-width:980px)]:hidden p-1.5 -ml-1 text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)]"
+                    className="[@media(min-width:980px)]:hidden p-1.5 -ml-1 text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] cursor-pointer"
+                    aria-label="Open navigation menu"
                   >
                     <Menu className="h-5 w-5" />
                   </button>
-
-                  {/* Desktop Show Sidebar Button when collapsed */}
-                  {isCollapsed && (
-                    <button
-                      type="button"
-                      onClick={toggleSidebar}
-                      className="hidden [@media(min-width:980px)]:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--approvals-line)] bg-[var(--approvals-card)] text-[12px] text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] transition-colors cursor-pointer mr-1"
-                      title="Show navigation sidebar"
-                    >
-                      <PanelLeftOpen className="h-4 w-4 text-[var(--approvals-brand)]" />
-                      <span>Sidebar</span>
-                    </button>
-                  )}
 
                   {typeof title === "string" ? (
                     <h1 className="text-[28px] sm:text-[32px] font-medium tracking-[-0.03em] text-[var(--approvals-ink)] leading-tight">
@@ -337,45 +569,33 @@ export function ConsumerShell({
                 )}
               </div>
 
-              <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
-                {headerActions}
-                <div className="scale-90 origin-right">
-                  <ModeSwitcher />
+              {headerActions && (
+                <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
+                  {headerActions}
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setMobileDrawerOpen(true)}
-                  className="[@media(min-width:980px)]:hidden p-1.5 -ml-1 text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)]"
+                  className="[@media(min-width:980px)]:hidden p-1.5 -ml-1 text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] cursor-pointer"
+                  aria-label="Open navigation menu"
                 >
                   <Menu className="h-5 w-5" />
                 </button>
-
-                {isCollapsed && (
-                  <button
-                    type="button"
-                    onClick={toggleSidebar}
-                    className="hidden [@media(min-width:980px)]:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--approvals-line)] bg-[var(--approvals-card)] text-[12px] text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] transition-colors cursor-pointer mr-1"
-                  >
-                    <PanelLeftOpen className="h-4 w-4 text-[var(--approvals-brand)]" />
-                    <span>Sidebar</span>
-                  </button>
-                )}
               </div>
 
-              <div className="ml-auto flex items-center gap-3">
-                {headerActions}
-                <div className="scale-90 origin-right">
-                  <ModeSwitcher />
+              {headerActions && (
+                <div className="ml-auto flex items-center gap-3">
+                  {headerActions}
                 </div>
-              </div>
+              )}
             </div>
           )}
 
-          {/* Main Content */}
+          {/* Main Page Content */}
           {children}
         </div>
       </main>
