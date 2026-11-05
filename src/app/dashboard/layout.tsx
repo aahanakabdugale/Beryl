@@ -3,58 +3,99 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import {
-  LayoutDashboard,
-  PlusCircle,
-  Bot,
-  CheckSquare,
-  FileSpreadsheet,
-  ShieldAlert,
-  BarChart3,
+  Copy,
+  Check,
+  Lock,
   LogOut,
-  Power,
   Menu,
   X,
-  ShoppingBag,
+  FileSpreadsheet,
+  ShieldAlert,
+  Bot,
+  Sliders,
+  CheckSquare,
+  BarChart3,
+  LayoutDashboard,
+  Maximize2,
+  Minimize2,
+  ChevronRight,
   Terminal,
-  Shield,
-  Sparkles,
 } from "lucide-react";
-import { BerylLogo } from "@/components/beryl-logo";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { RealtimeListener } from "@/components/realtime-listener";
-import { ViewModeProvider, useViewMode } from "@/components/view-mode-context";
-import { ModeSwitcher } from "@/components/mode-switcher";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useViewMode } from "@/components/view-mode-context";
+import { useInspector } from "@/components/inspector-context";
+import { DeveloperCommandBar } from "@/components/developer-command-bar";
 import { createClient } from "@/lib/supabase/browser";
 import { toast } from "sonner";
 
-// Navigation sets tailored for each persona
-const CONSUMER_NAV = [
-  { label: "Wallet & Budget", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Shop with Agent", href: "/dashboard/agent", icon: Bot },
-  { label: "Pending Approvals", href: "/dashboard/approvals", icon: CheckSquare },
-  { label: "Spending Rules", href: "/dashboard/mandates/new", icon: PlusCircle },
-  { label: "Spending Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+const EXPLORER_MODULES = [
+  { id: "overview", name: "overview.ts", href: "/dashboard", icon: LayoutDashboard },
+  { id: "audit", name: "audit_log.grid", href: "/dashboard/audit", icon: FileSpreadsheet },
+  { id: "attack", name: "attack_lab", href: "/dashboard/attack-lab", icon: ShieldAlert },
+  { id: "tracing", name: "agent_tracing", href: "/dashboard/agent", icon: Bot },
+  { id: "policy", name: "policy.json", href: "/dashboard/mandates/new", icon: Sliders },
+  { id: "escalations", name: "escalations", href: "/dashboard/approvals", icon: CheckSquare },
+  { id: "analytics", name: "analytics", href: "/dashboard/analytics", icon: BarChart3 },
 ];
 
-const DEVELOPER_NAV = [
-  { label: "Dashboard Overview", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Audit Log (AG Grid)", href: "/dashboard/audit", icon: FileSpreadsheet },
-  { label: "Attack Lab & Scoreboard", href: "/dashboard/attack-lab", icon: ShieldAlert },
-  { label: "Agent Tool Tracing", href: "/dashboard/agent", icon: Bot },
-  { label: "Policy Parameters", href: "/dashboard/mandates/new", icon: PlusCircle },
-  { label: "Escalation Queue", href: "/dashboard/approvals", icon: CheckSquare },
-  { label: "Engine Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-];
+function SyntaxHighlightedJson({ data }: { data: Record<string, any> }) {
+  const formatted = JSON.stringify(data, null, 2);
+  const lines = formatted.split("\n");
+
+  return (
+    <pre className="font-mono text-[11px] leading-relaxed select-text whitespace-pre-wrap break-all p-1">
+      {lines.map((line, idx) => {
+        const keyMatch = line.match(/^(\s*)"([^"]+)":\s*(.*)$/);
+        if (keyMatch) {
+          const indent = keyMatch[1];
+          const key = keyMatch[2];
+          const val = keyMatch[3];
+
+          let valColor = "text-[#A7F3D0] dark:text-[#A7F3D0]";
+          if (val.includes("BLOCK") || val.includes("REJECT")) valColor = "text-rose-500 dark:text-rose-400 font-bold";
+          else if (val.includes("APPROV")) valColor = "text-emerald-500 dark:text-[#3EE0A8] font-bold";
+          else if (val.includes("NEEDS_APPROVAL") || val.includes("PENDING")) valColor = "text-amber-500 dark:text-amber-400 font-bold";
+          else if (!isNaN(Number(val.replace(/,$/, "")))) valColor = "text-amber-400 dark:text-amber-300 font-mono";
+          else if (val.startsWith('"')) valColor = "text-emerald-300 dark:text-[#6EE7B7]";
+          else if (val.includes("true") || val.includes("false") || val.includes("null")) valColor = "text-sky-400";
+
+          return (
+            <div key={idx} className="hover:bg-black/5 dark:hover:bg-white/5 py-0.5 rounded px-1 transition-colors">
+              <span>{indent}</span>
+              <span className="text-emerald-600 dark:text-[#3EE0A8] font-semibold">&quot;{key}&quot;</span>
+              <span className="text-zinc-500">: </span>
+              <span className={`${valColor} break-all`}>{val}</span>
+            </div>
+          );
+        }
+
+        return (
+          <div key={idx} className="text-zinc-500 dark:text-zinc-400 py-0.5 px-1 break-all">
+            {line}
+          </div>
+        );
+      })}
+    </pre>
+  );
+}
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { viewMode, isDeveloper } = useViewMode();
+  const { isDeveloper, lockDeveloperMode } = useViewMode();
+  const { inspectorPayload, isInspectorVisible, toggleInspector } = useInspector();
+  const { resolvedTheme, setTheme } = useTheme();
+
+  const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("demo@beryl.dev");
+  const [copiedJson, setCopiedJson] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function loadUser() {
@@ -85,11 +126,21 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const navItems = isDeveloper ? DEVELOPER_NAV : CONSUMER_NAV;
+  const handleCopyJson = () => {
+    try {
+      navigator.clipboard.writeText(JSON.stringify(inspectorPayload.data, null, 2));
+      setCopiedJson(true);
+      toast.success("Inspector payload copied to clipboard");
+      setTimeout(() => setCopiedJson(false), 2000);
+    } catch {
+      toast.error("Failed to copy JSON");
+    }
+  };
 
-  const isConsumerCustomShell = !isDeveloper;
+  const isDark = mounted ? resolvedTheme === "dark" : true;
 
-  if (isConsumerCustomShell) {
+  // If consumer mode, render the standard ConsumerShell cleanly
+  if (!isDeveloper) {
     return (
       <div className="min-h-screen bg-[var(--approvals-page)] text-[var(--approvals-ink)]">
         <RealtimeListener />
@@ -99,165 +150,223 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F3F7F5] dark:bg-[#07100D] flex flex-col md:flex-row text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-[#F0F4F2] dark:bg-[#07100D] text-zinc-900 dark:text-zinc-100 flex flex-col font-mono selection:bg-[#3EE0A8]/30 transition-colors">
       <RealtimeListener />
 
-      {/* Mobile Top Bar */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-zinc-200 dark:border-[#1A332B] bg-white dark:bg-[#0D1C17] sticky top-0 z-40">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <BerylLogo size={24} />
-          <span className="font-heading font-bold text-base tracking-wider text-[#07100D] dark:text-[#EDF5F2]">
-            BERYL
-          </span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <ModeSwitcher />
-          <Button
-            variant="ghost"
-            size="sm"
+      {/* ============================================================== */}
+      {/* 1. TOP IDE BAR HEADER                                          */}
+      {/* ============================================================== */}
+      <header className="h-14 border-b border-zinc-200 dark:border-[#173026] bg-white/90 dark:bg-[#091511]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-40 transition-colors">
+        {/* Left: [B] BERYL + Developer Lab Badge */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-1.5"
+            className="md:hidden p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer"
+            aria-label="Toggle explorer"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          </button>
+
+          <Link href="/" className="flex items-center gap-2.5 focus:outline-none">
+            <div className="w-7 h-7 rounded-lg bg-[#0B7A5A] dark:bg-[#10B981] text-white dark:text-[#07100D] font-bold text-sm flex items-center justify-center font-heading shadow-xs">
+              B
+            </div>
+            <span className="font-heading font-extrabold text-base tracking-wider text-zinc-900 dark:text-[#EDF5F2]">
+              BERYL
+            </span>
+          </Link>
+
+          <span className="px-2.5 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-[#0B7A5A] dark:text-[#3EE0A8] text-[11px] font-semibold tracking-wide hidden sm:inline-block">
+            Developer Lab
+          </span>
         </div>
+
+        {/* Right: Engine status, Dark/Light Switch & Lock lab */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Status pill: ● engine 0ms · air-gap enforced */}
+          <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-[#0E1F1A] border border-emerald-200 dark:border-[#1B3B2E] text-[11px] text-[#0B7A5A] dark:text-[#3EE0A8] font-medium">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>engine 0ms · air-gap enforced</span>
+          </div>
+
+          {/* Inspector Toggle Button */}
+          <button
+            type="button"
+            onClick={toggleInspector}
+            className={`hidden xl:inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-mono transition-colors cursor-pointer border ${
+              isInspectorVisible
+                ? "bg-emerald-50 dark:bg-[#122A21] text-[#0B7A5A] dark:text-[#3EE0A8] border-emerald-200 dark:border-[#1F4638]"
+                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 border-zinc-200 dark:border-[#173026]"
+            }`}
+            title="Toggle JSON Inspector"
+          >
+            <Terminal className="h-3.5 w-3.5" />
+            <span>Inspector</span>
+          </button>
+
+          {/* Theme Switch: Dark [toggle] Light */}
+          <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-500 dark:text-zinc-400 select-none">
+            <span className={isDark ? "text-zinc-400 dark:text-[#A7D7C5] font-semibold" : "text-zinc-400"}>
+              Dark
+            </span>
+            <button
+              type="button"
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer flex items-center ${
+                isDark ? "bg-[#1B382F]" : "bg-emerald-600"
+              }`}
+              title="Toggle theme"
+              aria-label="Toggle theme"
+            >
+              <div
+                className={`w-4 h-4 rounded-full bg-white shadow-xs transition-transform ${
+                  isDark ? "translate-x-0" : "translate-x-4"
+                }`}
+              />
+            </button>
+            <span className={!isDark ? "text-zinc-900 font-bold" : "text-zinc-500"}>
+              Light
+            </span>
+          </div>
+
+          {/* Lock Lab Button */}
+          <button
+            type="button"
+            onClick={lockDeveloperMode}
+            className="px-3.5 py-1.5 rounded-xl border border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 text-xs font-mono font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+            title="Lock Developer Lab and return to Consumer App"
+          >
+            <Lock className="h-3.5 w-3.5" />
+            <span>Lock lab</span>
+          </button>
+        </div>
+      </header>
+
+      {/* ============================================================== */}
+      {/* 2. MAIN 3-PANEL IDE BODY                                       */}
+      {/* ============================================================== */}
+      <div className="flex-1 flex overflow-hidden p-3 sm:p-4 gap-3">
+        {/* ============================================================ */}
+        {/* PANEL 1: EXPLORER                                             */}
+        {/* ============================================================ */}
+        <aside
+          className={`${
+            mobileMenuOpen ? "flex" : "hidden"
+          } md:flex flex-col w-56 lg:w-60 shrink-0 bg-white dark:bg-[#0B1713] border border-zinc-200 dark:border-[#173026] rounded-2xl p-4 justify-between transition-colors z-30 shadow-xs fixed md:relative top-16 md:top-0 bottom-4 left-3 right-3 md:left-0 md:right-0 md:bottom-0`}
+        >
+          <div className="space-y-4">
+            <div className="text-[11px] font-mono uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold px-2">
+              EXPLORER
+            </div>
+
+            <nav className="space-y-1">
+              {EXPLORER_MODULES.map((item) => {
+                const isActive =
+                  item.href === "/dashboard"
+                    ? pathname === "/dashboard"
+                    : pathname.startsWith(item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-mono transition-all ${
+                      isActive
+                        ? "bg-emerald-500/10 text-[#0B7A5A] dark:text-[#3EE0A8] font-bold border border-emerald-500/25 shadow-xs"
+                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/70 dark:hover:bg-[#0F221B]"
+                    }`}
+                  >
+                    <item.icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-[#0B7A5A] dark:text-[#3EE0A8]" : "opacity-60"}`} />
+                    <span className="truncate">{item.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Explorer Bottom: Active Account */}
+          <div className="pt-3 border-t border-zinc-200 dark:border-[#173026] space-y-2 text-xs">
+            <div className="px-2 py-1.5 rounded-lg bg-zinc-50 dark:bg-[#08120E] text-[11px] truncate">
+              <span className="text-zinc-400 block text-[9px] uppercase tracking-wider">Session</span>
+              <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate block mt-0.5">
+                {userEmail}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 text-xs transition-colors cursor-pointer"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </aside>
+
+        {/* ============================================================ */}
+        {/* PANEL 2: WORKSPACE / EDITOR STAGE                             */}
+        {/* ============================================================ */}
+        <main className="flex-1 min-w-0 bg-white dark:bg-[#0B1713] border border-zinc-200 dark:border-[#173026] rounded-2xl flex flex-col overflow-hidden shadow-xs transition-colors">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            {children}
+          </div>
+        </main>
+
+        {/* ============================================================ */}
+        {/* PANEL 3: INSPECTOR                                           */}
+        {/* ============================================================ */}
+        {isInspectorVisible && (
+          <aside className="hidden xl:flex flex-col w-72 lg:w-80 shrink-0 bg-white dark:bg-[#0B1713] border border-zinc-200 dark:border-[#173026] rounded-2xl p-4 justify-between transition-colors shadow-xs font-mono text-xs">
+            <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
+              {/* Inspector Header */}
+              <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold pb-2 border-b border-zinc-200 dark:border-[#173026]">
+                <div className="flex items-center gap-1.5">
+                  <Terminal className="h-3.5 w-3.5 text-[#0B7A5A] dark:text-[#3EE0A8]" />
+                  <span>INSPECTOR</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyJson}
+                    className="p-1 rounded text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+                    title="Copy formatted JSON"
+                  >
+                    {copiedJson ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Title Tag */}
+              <div className="flex items-center justify-between text-[10px] text-zinc-400">
+                <span className="font-semibold text-emerald-700 dark:text-[#3EE0A8]">
+                  {inspectorPayload.title || "PAYLOAD_SNAPSHOT"}
+                </span>
+                <span>0ms latency</span>
+              </div>
+
+              {/* Formatted Code Block */}
+              <div className="flex-1 overflow-y-auto rounded-xl bg-zinc-50 dark:bg-[#07100D] border border-zinc-200 dark:border-[#173026] p-2.5">
+                <SyntaxHighlightedJson data={inspectorPayload.data} />
+              </div>
+            </div>
+
+            {/* Inspector Footer Status */}
+            <div className="pt-3 border-t border-zinc-200 dark:border-[#173026] text-[10px] text-zinc-400 flex items-center justify-between">
+              <span>Policy: Deterministic</span>
+              <span className="text-emerald-600 dark:text-[#3EE0A8] font-bold">AIR-GAP ACTIVE</span>
+            </div>
+          </aside>
+        )}
       </div>
 
-      {/* Sidebar Navigation */}
-      <aside
-        className={`${
-          mobileMenuOpen ? "flex" : "hidden"
-        } md:flex flex-col w-full md:w-64 bg-white dark:bg-[#0D1C17] border-r border-zinc-200 dark:border-[#1A332B] p-4 shrink-0 justify-between fixed md:sticky top-0 h-screen z-30 transition-all`}
-      >
-        <div className="space-y-5">
-          {/* Logo & Tag */}
-          <div className="px-2 pt-2">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <BerylLogo size={28} />
-              <span className="font-heading font-extrabold text-lg tracking-wider text-[#07100D] dark:text-[#EDF5F2]">
-                BERYL
-              </span>
-            </Link>
-            <div className="mt-1 flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-[#3EE0A8] font-bold">
-                {isDeveloper ? "Developer Runtime" : "Autonomous Wallet"}
-              </span>
-            </div>
-          </div>
-
-          {/* Mode Indicator Pill inside Sidebar */}
-          <div className="px-1">
-            <div
-              className={`p-2 rounded-xl text-xs flex items-center gap-2 border ${
-                isDeveloper
-                  ? "bg-[#07100D] border-[#3EE0A8]/30 text-[#3EE0A8]"
-                  : "bg-emerald-50/80 dark:bg-[#12241E] border-emerald-500/20 text-[#0B7A5A] dark:text-[#3EE0A8]"
-              }`}
-            >
-              {isDeveloper ? (
-                <>
-                  <Terminal className="h-4 w-4 shrink-0" />
-                  <div className="truncate">
-                    <span className="font-mono font-bold block text-[11px]">Developer Lab</span>
-                    <span className="text-[10px] text-zinc-400 font-sans">Full Engine & Attack Tools</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <ShoppingBag className="h-4 w-4 shrink-0" />
-                  <div className="truncate">
-                    <span className="font-bold block text-[11px]">Consumer App</span>
-                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans">Simple Shopper Interface</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Nav Items */}
-          <nav className="space-y-1">
-            <div className="text-[10px] font-mono text-zinc-400 px-3 uppercase tracking-wider font-semibold mb-1">
-              {isDeveloper ? "Security & Policy Modules" : "Shopping Navigation"}
-            </div>
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive =
-                item.href === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname.startsWith(item.href);
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                    isActive
-                      ? "bg-emerald-50 dark:bg-[#152B23] text-[#0B7A5A] dark:text-[#3EE0A8]"
-                      : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#12241E] hover:text-zinc-900 dark:hover:text-zinc-100"
-                  }`}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Bottom Sidebar: User & System Status */}
-        <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-[#1A332B]">
-          <div className="flex items-center justify-between px-2">
-            <span className="text-[11px] font-mono text-zinc-400">Theme</span>
-            <ThemeToggle />
-          </div>
-
-          <div className="px-3 py-2 rounded-xl bg-zinc-50 dark:bg-[#12241E] border border-zinc-200/60 dark:border-[#1E3A31] text-xs">
-            <div className="text-[10px] font-mono text-zinc-400 truncate">Active Account</div>
-            <div className="font-semibold text-zinc-800 dark:text-zinc-200 truncate mt-0.5">
-              {userEmail}
-            </div>
-          </div>
-
-          <Button
-            variant="ghost"
-            onClick={handleSignOut}
-            className="w-full justify-start text-xs text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 gap-2 h-8 px-3 cursor-pointer"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span>Sign Out</span>
-          </Button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 min-w-0 overflow-y-auto flex flex-col">
-        {/* Top Header Bar with Mode Switcher */}
-        <header className="sticky top-0 z-20 backdrop-blur-md bg-[#F3F7F5]/90 dark:bg-[#07100D]/90 border-b border-zinc-200/80 dark:border-[#1A332B] px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
-          <div className="hidden sm:flex items-center gap-3">
-            <ModeSwitcher />
-          </div>
-
-          <div className="flex items-center gap-3 ml-auto">
-            {isDeveloper ? (
-              <Badge className="bg-[#07100D] border border-emerald-500/40 text-[#3EE0A8] font-mono text-[10px] px-2.5 py-1">
-                ENGINE: 0ms · AIR-GAP ENFORCED
-              </Badge>
-            ) : (
-              <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-[#3EE0A8] text-[10px] font-medium px-2.5 py-1">
-                PROTECTED BY BERYL
-              </Badge>
-            )}
-            <ThemeToggle />
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <div className="max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6 flex-1">
-          {children}
-        </div>
-      </main>
+      {/* ============================================================== */}
+      {/* 3. BOTTOM TERMINAL / COMMAND BAR                               */}
+      {/* ============================================================== */}
+      <DeveloperCommandBar />
     </div>
   );
 }
@@ -267,9 +376,5 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <ViewModeProvider>
-      <DashboardContent>{children}</DashboardContent>
-    </ViewModeProvider>
-  );
+  return <DashboardContent>{children}</DashboardContent>;
 }
