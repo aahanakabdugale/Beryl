@@ -13,6 +13,11 @@ const PROTECTED_PREFIXES = [
 
 const AUTH_PREFIXES = ["/login", "/auth", "/signup", "/sign-in", "/sign-up"];
 
+const DEV_ONLY_PREFIXES = [
+  "/dashboard/audit",
+  "/dashboard/attack-lab",
+];
+
 export async function middleware(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request);
   const pathname = request.nextUrl.pathname;
@@ -21,11 +26,24 @@ export async function middleware(request: NextRequest) {
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 
+  const isDevOnlyPath = DEV_ONLY_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+
   const isAuthPath = AUTH_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 
   const isDemo = request.cookies.get("beryl_demo_mode")?.value === "true";
+  const isDevAuth = request.cookies.get("beryl_dev_authenticated")?.value === "true";
+
+  // If a consumer tries to access developer-only tools without dev key
+  if (isDevOnlyPath && !isDevAuth) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/dashboard";
+    redirectUrl.searchParams.set("dev_gate", "required");
+    return NextResponse.redirect(redirectUrl);
+  }
 
   // If user is not authenticated and trying to access a protected dashboard route
   if (!user && !isDemo && isProtectedPath) {
