@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useViewMode } from "@/components/view-mode-context";
+import { useInspector } from "@/components/inspector-context";
 import { BerylLogo } from "@/components/beryl-logo";
 import { toast } from "sonner";
 
@@ -56,6 +57,7 @@ interface AuditLog {
 
 export default function DashboardOverview() {
   const { isDeveloper } = useViewMode();
+  const { inspectData } = useInspector();
   const [mandates, setMandates] = useState<Mandate[]>([]);
   const [activeMandate, setActiveMandate] = useState<Mandate | null>(null);
   const [recentLogs, setRecentLogs] = useState<AuditLog[]>([]);
@@ -83,6 +85,17 @@ export default function DashboardOverview() {
         const data = await resAudit.json();
         const logs = data.records || data.logs || [];
         setRecentLogs(logs.slice(0, 6));
+        if (logs.length > 0) {
+          const first = logs[0];
+          inspectData("RECENT_DECISION", {
+            merchant: first.merchant || "Amazon",
+            amount: (first.amount_cents || 0) / 100,
+            rule: first.rule_code || "APPROVED",
+            verdict: first.decision || "APPROVE",
+            item: first.item || first.item_name || "Payment Request",
+            latency_ms: 0,
+          });
+        }
       }
     } catch {
       toast.error("Failed to load dashboard data");
@@ -622,7 +635,24 @@ export default function DashboardOverview() {
                 return (
                   <div
                     key={log.id}
-                    className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-zinc-50 dark:hover:bg-[#12241E] transition-colors"
+                    onClick={() => {
+                      if (isDeveloper) {
+                        inspectData("INSPECTED_DECISION", {
+                          id: log.id,
+                          merchant: log.merchant || "Amazon",
+                          amount: (log.amount_cents || 0) / 100,
+                          rule: log.rule_code || "APPROVED",
+                          verdict: log.decision || "APPROVE",
+                          item: log.item || log.item_name || "Payment Request",
+                          created_at: log.created_at,
+                          paypal_order_id: log.paypal_order_id || null,
+                          latency_ms: 0,
+                        });
+                      }
+                    }}
+                    className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-zinc-50 dark:hover:bg-[#12241E] transition-colors ${
+                      isDeveloper ? "cursor-pointer active:bg-emerald-500/10" : ""
+                    }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
