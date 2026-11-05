@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ShoppingBag, Terminal, Sparkles, ShieldCheck } from "lucide-react";
+import { ShoppingBag, Terminal } from "lucide-react";
 import { useViewMode } from "./view-mode-context";
 
 export function ModeSwitcher({ className = "" }: { className?: string }) {
