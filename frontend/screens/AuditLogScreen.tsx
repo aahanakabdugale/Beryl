@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useViewMode } from "@/components/view-mode-context";
+import { useInspector } from "@/components/inspector-context";
 import Link from "next/link";
 import {
   Sheet,
@@ -51,6 +52,7 @@ interface AuditRow {
 
 export default function AuditLogPage() {
   const { isDeveloper, setViewMode } = useViewMode();
+  const { inspectData } = useInspector();
   const { resolvedTheme } = useTheme();
   const [rowData, setRowData] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,7 +94,11 @@ export default function AuditLogPage() {
       const res = await fetch("/api/audit");
       if (res.ok) {
         const data = await res.json();
-        setRowData(data.logs || []);
+        const logs = data.logs || [];
+        setRowData(logs);
+        if (logs.length > 0) {
+          inspectData("SELECTED_AUDIT_RECORD", logs[0]);
+        }
       }
     } catch {
       toast.error("Failed to load audit logs");
@@ -314,6 +320,7 @@ export default function AuditLogPage() {
             if (e.data) {
               setSelectedRow(e.data);
               setDrawerOpen(true);
+              inspectData("INSPECTED_TRANSACTION", e.data);
             }
           }}
         />
