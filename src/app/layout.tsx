@@ -43,6 +43,7 @@ export const metadata: Metadata = {
 };
 
 import { ViewModeProvider } from "@/components/view-mode-context";
+import { InspectorProvider } from "@/components/inspector-context";
 
 export default function RootLayout({
   children,
@@ -63,8 +64,10 @@ export default function RootLayout({
           disableTransitionOnChange={false}
         >
           <ViewModeProvider>
-            {children}
-            <Toaster richColors position="top-right" />
+            <InspectorProvider>
+              {children}
+              <Toaster richColors position="top-right" />
+            </InspectorProvider>
           </ViewModeProvider>
         </ThemeProvider>
       </body>
