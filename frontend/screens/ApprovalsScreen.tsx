@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useViewMode } from "@/components/view-mode-context";
+import { useInspector } from "@/components/inspector-context";
 import { toast } from "sonner";
 
 interface ApprovalItem {
@@ -55,6 +56,7 @@ interface ApprovalItem {
 
 export default function ApprovalsPage() {
   const { isDeveloper } = useViewMode();
+  const { inspectData } = useInspector();
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalItem | null>(null);
@@ -69,7 +71,21 @@ export default function ApprovalsPage() {
       const res = await fetch("/api/approvals?status=all");
       if (res.ok) {
         const data = await res.json();
-        setApprovals(data.approvals || []);
+        const list = data.approvals || [];
+        setApprovals(list);
+        if (list.length > 0) {
+          const first = list[0];
+          inspectData("PENDING_ESCALATION", {
+            id: first.id,
+            request_id: first.request_id,
+            item: first.payment_requests?.item || "Payment Request",
+            merchant: first.payment_requests?.merchant || first.payment_requests?.merchant_domain || "Merchant",
+            amount: (first.payment_requests?.amount_cents || 0) / 100,
+            status: first.status,
+            agent_reason: first.payment_requests?.agent_reason,
+            mandate: first.payment_requests?.mandates?.name || "Active Mandate",
+          });
+        }
       }
     } catch {
       toast.error("Failed to load approvals");
@@ -86,6 +102,18 @@ export default function ApprovalsPage() {
     setSelectedApproval(item);
     setRejectReason("");
     setSheetOpen(true);
+    inspectData("SELECTED_ESCALATION", {
+      id: item.id,
+      request_id: item.request_id,
+      item: item.payment_requests?.item,
+      amount: (item.payment_requests?.amount_cents || 0) / 100,
+      merchant: item.payment_requests?.merchant || item.payment_requests?.merchant_domain,
+      status: item.status,
+      agent_reason: item.payment_requests?.agent_reason,
+      threshold: item.payment_requests?.mandates?.approval_threshold_cents ? item.payment_requests.mandates.approval_threshold_cents / 100 : 15.0,
+      rule: "APPROVAL_THRESHOLD_EXCEEDED",
+      verdict: "NEEDS_APPROVAL",
+    });
   };
 
   const handleDecide = async (decision: "APPROVE" | "REJECT") => {
