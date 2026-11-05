@@ -63,13 +63,19 @@ const RECENT_DECISIONS_STRIP = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const { viewMode, isDeveloper } = useViewMode();
+  const { viewMode, isDeveloper, requestDeveloperMode } = useViewMode();
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [activeCheckTab, setActiveCheckTab] = useState<number | null>(null);
 
   const handleEnterDemo = () => {
     document.cookie = "beryl_demo_mode=true; path=/; max-age=86400";
-    router.push(isDeveloper ? "/dashboard/attack-lab" : "/dashboard");
+    if (isDeveloper) {
+      requestDeveloperMode(() => {
+        router.push("/dashboard/attack-lab");
+      });
+    } else {
+      router.push("/dashboard");
+    }
   };
 
   return (
