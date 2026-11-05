@@ -4,30 +4,17 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
+import { ConsumerShell } from "@/frontend/components/ConsumerShell";
 import {
-  Wallet,
-  ShoppingBag,
-  CheckSquare,
-  Sliders,
-  BarChart3,
-  Sun,
-  Moon,
   RotateCcw,
   Plus,
   Check,
   AlertCircle,
-  Menu,
-  X,
   Keyboard,
   Package,
   Zap,
   Layers,
-  LogOut,
-  ChevronDown,
 } from "lucide-react";
-import { BerylLogo } from "@/components/beryl-logo";
-import { ModeSwitcher } from "@/components/mode-switcher";
-import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -73,9 +60,6 @@ export default function ConsumerApprovalsScreen() {
   const [activeTab, setActiveTab] = useState<"pending" | "approved" | "rejected">("pending");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [decidingId, setDecidingId] = useState<string | null>(null);
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [userName, setUserName] = useState("Aahana");
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   // 1. Fetch approvals and active mandate
   const loadData = async () => {
@@ -240,18 +224,6 @@ export default function ConsumerApprovalsScreen() {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      document.cookie = "beryl_demo_mode=; path=/; max-age=0";
-      toast.success("Signed out");
-      router.push("/login");
-    } catch {
-      router.push("/login");
-    }
-  };
-
   // Helper for Item icon
   const getItemIcon = (name: string = "") => {
     const lower = name.toLowerCase();
@@ -262,196 +234,36 @@ export default function ConsumerApprovalsScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--approvals-page)] text-[var(--approvals-ink)] font-[family-name:var(--font-space-grotesk)] flex">
-      {/* ============================================================== */}
-      {/* 236px Fixed Sidebar                                             */}
-      {/* ============================================================== */}
-      <aside
-        className={`fixed left-0 top-0 bottom-0 w-[236px] bg-[var(--approvals-card)] border-r border-[var(--approvals-line)] p-6 flex flex-col justify-between z-40 transition-transform duration-200 ${
-          mobileDrawerOpen
-            ? "translate-x-0"
-            : "-translate-x-full [@media(min-width:980px)]:translate-x-0"
-        }`}
-      >
-        <div className="space-y-8">
-          {/* Logo row (28px gem tile + BERYL Space Grotesk 700 tracking .05em) */}
-          <div className="flex items-center justify-between">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] rounded-lg"
-            >
-              <BerylLogo size={26} />
-              <span className="font-heading font-bold text-[17px] tracking-[0.05em] text-[var(--approvals-ink)]">
-                BERYL
-              </span>
-            </Link>
-
-            <button
-              onClick={() => setMobileDrawerOpen(false)}
-              className="[@media(min-width:980px)]:hidden p-1 text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)]"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          {/* Plain text links */}
-          <nav className="space-y-1 flex flex-col">
-            <Link
-              href="/dashboard"
-              className="px-4 py-2.5 text-[15px] text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] rounded-xl transition-colors font-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)]"
-            >
-              Wallet & Budget
-            </Link>
-
-            <Link
-              href="/dashboard/agent"
-              className="px-4 py-2.5 text-[15px] text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] rounded-xl transition-colors font-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)]"
-            >
-              Shop with agent
-            </Link>
-
-            <Link
-              href="/dashboard/approvals"
-              className="px-4 py-2.5 text-[15px] font-medium rounded-xl bg-[var(--approvals-soft)] text-[var(--approvals-accent)] flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)]"
-            >
-              <span>Pending approvals</span>
-              {counts.pending > 0 && (
-                <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-[var(--approvals-amber)] text-white text-[11px] font-bold flex items-center justify-center">
-                  {counts.pending}
-                </span>
-              )}
-            </Link>
-
-            <Link
-              href="/dashboard/mandates/new"
-              className="px-4 py-2.5 text-[15px] text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] rounded-xl transition-colors font-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)]"
-            >
-              Spending rules
-            </Link>
-
-            <Link
-              href="/dashboard/analytics"
-              className="px-4 py-2.5 text-[15px] text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] rounded-xl transition-colors font-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)]"
-            >
-              Spending analytics
-            </Link>
-          </nav>
-        </div>
-
-        {/* Sidebar Bottom: Account Chip with Menu & Theme Toggle */}
-        <div className="pt-4 border-t border-[var(--approvals-line)] flex items-center justify-between gap-2 relative">
-          {/* Account Chip */}
-          <div className="relative flex-1 min-w-0">
-            <button
-              onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-              className="w-full flex items-center gap-2.5 p-1.5 rounded-2xl hover:bg-[var(--approvals-page)] transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)]"
-            >
-              <div className="w-8 h-8 rounded-full bg-[var(--approvals-soft)] text-[var(--approvals-accent)] font-bold text-xs flex items-center justify-center shrink-0">
-                {userName.charAt(0)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-medium text-[var(--approvals-ink)] truncate leading-tight">
-                  {userName}
-                </div>
-                <div className="text-[11px] text-[var(--approvals-mute)] leading-tight">
-                  Consumer
-                </div>
-              </div>
-              <ChevronDown className="h-3 w-3 text-[var(--approvals-mute)] shrink-0 mr-1" />
-            </button>
-
-            {/* Dropdown Menu */}
-            {accountMenuOpen && (
-              <div className="absolute bottom-12 left-0 w-48 bg-[var(--approvals-card)] border border-[var(--approvals-line)] rounded-xl shadow-lg p-1.5 z-50">
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Theme Toggle Icon Button */}
+    <ConsumerShell
+      activePath="/dashboard/approvals"
+      pendingCount={counts.pending}
+      title="Pending order approvals"
+      description="Items your agent found that need your sign-off before charging PayPal."
+      headerActions={
+        <>
           <button
             type="button"
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className="w-8 h-8 rounded-full border border-[var(--approvals-line)] flex items-center justify-center text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)] hover:bg-[var(--approvals-page)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] cursor-pointer shrink-0"
-            aria-label="Toggle dark mode"
+            onClick={loadData}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[var(--approvals-line)] text-[14px] text-[var(--approvals-ink)] hover:bg-[var(--approvals-card)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] cursor-pointer"
           >
-            {resolvedTheme === "dark" ? (
-              <Sun className="h-3.5 w-3.5 text-amber-400" />
-            ) : (
-              <Moon className="h-3.5 w-3.5 text-[var(--approvals-mute)]" />
-            )}
+            <RotateCcw className={`h-3.5 w-3.5 text-[var(--approvals-mute)] ${loading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
           </button>
-        </div>
-      </aside>
 
-      {/* Backdrop for mobile drawer */}
-      {mobileDrawerOpen && (
-        <div
-          onClick={() => setMobileDrawerOpen(false)}
-          className="fixed inset-0 bg-black/40 z-30 [@media(min-width:980px)]:hidden"
-        />
-      )}
-
-      {/* ============================================================== */}
-      {/* Main Content Area                                              */}
-      {/* ============================================================== */}
-      <main className="flex-1 min-w-0 [@media(min-width:980px)]:pl-[236px] flex justify-center min-h-screen">
-        <div className="w-full max-w-[1120px] px-6 sm:px-11 py-9 space-y-9">
-          {/* Header Row */}
-          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setMobileDrawerOpen(true)}
-                  className="[@media(min-width:980px)]:hidden p-1.5 -ml-1 text-[var(--approvals-mute)] hover:text-[var(--approvals-ink)]"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
-                <h1 className="text-[32px] font-medium tracking-[-0.03em] text-[var(--approvals-ink)] leading-tight">
-                  Pending order approvals
-                </h1>
-              </div>
-              <p className="text-[15px] text-[var(--approvals-mute)]">
-                Items your agent found that need your sign-off before charging PayPal.
-              </p>
-            </div>
-
-            {/* Right Controls: Refresh, Sample order & Mode Switcher */}
-            <div className="flex items-center gap-3 self-start lg:self-auto flex-wrap">
-              <button
-                type="button"
-                onClick={loadData}
-                disabled={loading}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[var(--approvals-line)] text-[14px] text-[var(--approvals-ink)] hover:bg-[var(--approvals-card)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] cursor-pointer"
-              >
-                <RotateCcw className={`h-3.5 w-3.5 text-[var(--approvals-mute)] ${loading ? "animate-spin" : ""}`} />
-                <span>Refresh</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleCreateMockEscalation}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[var(--approvals-line)] text-[14px] text-[var(--approvals-ink)] hover:bg-[var(--approvals-card)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] cursor-pointer"
-              >
-                <Plus className="h-3.5 w-3.5 text-[var(--approvals-mute)]" />
-                <span>Sample order</span>
-              </button>
-
-              {/* Mode Switcher preserved small in top-right */}
-              <div className="scale-90 origin-right">
-                <ModeSwitcher />
-              </div>
-            </div>
-          </div>
-
-          {/* Segmented Pill Tabs */}
-          <div>
+          <button
+            type="button"
+            onClick={handleCreateMockEscalation}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[var(--approvals-line)] text-[14px] text-[var(--approvals-ink)] hover:bg-[var(--approvals-card)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--approvals-brand)] cursor-pointer"
+          >
+            <Plus className="h-3.5 w-3.5 text-[var(--approvals-mute)]" />
+            <span>Sample order</span>
+          </button>
+        </>
+      }
+    >
+      {/* Segmented Pill Tabs */}
+      <div>
             <div className="inline-flex items-center p-1 rounded-full bg-[var(--approvals-card)] border border-[var(--approvals-line)]">
               <button
                 onClick={() => setActiveTab("pending")}
@@ -813,7 +625,7 @@ export default function ConsumerApprovalsScreen() {
             )}
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </ConsumerShell>
   );
 }
