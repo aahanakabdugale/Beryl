@@ -64,10 +64,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Filter to only include approvals for mandates owned by this user
+    // Filter strictly to approvals belonging to this user's mandates
     const userApprovals = (approvals || []).filter((app: any) => {
       const mandateOwner = app.payment_requests?.mandates?.user_id;
-      return !mandateOwner || mandateOwner === user.id;
+      return mandateOwner === user.id;
     });
 
     return NextResponse.json({ approvals: userApprovals });
