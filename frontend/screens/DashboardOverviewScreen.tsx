@@ -11,7 +11,8 @@ interface Mandate {
   total_budget_cents: number;
   spent_cents?: number;
   per_purchase_limit_cents: number;
-  ask_above_cents: number;
+  ask_above_cents?: number;
+  approval_threshold_cents?: number;
   is_frozen: boolean;
   allowed_categories: string[];
 }
