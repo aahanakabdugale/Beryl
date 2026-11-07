@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <linearGradient id="aluminum" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="50%" stop-color="#CBD5E1"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+    <linearGradient id="phoneScreen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0F172A" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="400" rx="28" fill="url(#bg)"/>
+
+  <!-- Desktop Base Pad / Desk Surface Reflection -->
+  <ellipse cx="200" cy="305" rx="140" ry="20" fill="#CBD5E1" opacity="0.6"/>
+
+  <g filter="url(#shadow)">
+    <!-- Stand Heavy Aluminum Base -->
+    <rect x="120" y="275" width="160" height="22" rx="8" fill="url(#aluminum)" stroke="#94A3B8" stroke-width="1.5"/>
+    <rect x="135" y="278" width="130" height="4" rx="2" fill="#64748B" opacity="0.4"/>
+
+    <!-- Dual Articulating Arm -->
+    <path d="M 190 275 L 180 170 L 210 170 L 210 275 Z" fill="url(#aluminum)" stroke="#64748B" stroke-width="1"/>
+    <!-- Adjustment Axis Hinge -->
+    <circle cx="195" cy="170" r="14" fill="#64748B"/>
+    <circle cx="195" cy="170" r="8" fill="#E2E8F0"/>
+
+    <!-- Phone Cradle Backplate with Cable Cutout -->
+    <rect x="140" y="80" width="120" height="170" rx="12" fill="url(#aluminum)" stroke="#64748B" stroke-width="1.5"/>
+    <!-- Cable Pass-Through Hole -->
+    <rect x="185" y="140" width="30" height="50" rx="15" fill="#64748B" opacity="0.5"/>
+
+    <!-- Bottom Cradle Hooks / Anti-Slip Pads -->
+    <path d="M 140 230 L 140 255 Q 140 262 148 262 L 175 262 Q 182 262 182 255 L 182 245
+             M 218 245 L 218 255 Q 218 262 225 262 L 252 262 Q 260 262 260 255 L 260 230"
+          fill="url(#aluminum)" stroke="#64748B" stroke-width="2"/>
+    <rect x="145" y="250" width="30" height="6" rx="3" fill="#0B7A5A"/>
+    <rect x="225" y="250" width="30" height="6" rx="3" fill="#0B7A5A"/>
+
+    <!-- Smartphone Outline sitting on the stand -->
+    <rect x="130" y="60" width="140" height="190" rx="20" fill="url(#phoneScreen)" stroke="#475569" stroke-width="3"/>
+    <!-- Dynamic Island / Speaker cutout -->
+    <rect x="180" y="70" width="40" height="10" rx="5" fill="#020617"/>
+    <!-- Ambient Green Screen Glow -->
+    <circle cx="200" cy="150" r="35" fill="#0B7A5A" opacity="0.25"/>
+  </g>
+
+  <!-- Badge -->
+  <rect x="95" y="340" width="210" height="28" rx="14" fill="#334155"/>
+  <text x="200" y="358" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
+    ALUMINUM DESKTOP STAND
+  </text>
+</svg>

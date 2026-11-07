@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#27272A"/>
+      <stop offset="100%" stop-color="#18181B"/>
+    </linearGradient>
+    <linearGradient id="leather" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3F3F46"/>
+      <stop offset="50%" stop-color="#27272A"/>
+      <stop offset="100%" stop-color="#18181B"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="400" rx="28" fill="url(#bg)"/>
+
+  <g filter="url(#shadow)">
+    <!-- Motorcycle Leather Jacket Silhouette -->
+    <path d="M 140 85 L 80 135 L 110 280 L 150 260 L 160 300 L 240 300 L 250 260 L 290 280 L 320 135 L 260 85 Q 200 110 140 85 Z" 
+          fill="url(#leather)" stroke="#52525B" stroke-width="2.5"/>
+
+    <!-- Asymmetrical Biker Zipper -->
+    <line x1="220" y1="95" x2="190" y2="300" stroke="#E4E4E7" stroke-width="3.5" stroke-dasharray="6 3"/>
+    <!-- Metal Zipper Pull -->
+    <circle cx="210" cy="160" r="5" fill="#E4E4E7"/>
+    <rect x="208" y="165" width="4" height="10" rx="2" fill="#E4E4E7"/>
+
+    <!-- Lapels with Snap Buttons -->
+    <polygon points="175,95 215,150 160,165" fill="#52525B"/>
+    <circle cx="180" cy="140" r="4" fill="#E4E4E7"/>
+    <polygon points="225,95 190,145 240,160" fill="#52525B"/>
+    <circle cx="220" cy="135" r="4" fill="#E4E4E7"/>
+
+    <!-- Waist Belt with Buckle -->
+    <rect x="155" y="275" width="90" height="16" rx="3" fill="#18181B" stroke="#52525B" stroke-width="1.5"/>
+    <rect x="190" y="271" width="20" height="24" rx="4" fill="none" stroke="#E4E4E7" stroke-width="3"/>
+  </g>
+
+  <!-- Badge -->
+  <rect x="95" y="340" width="210" height="28" rx="14" fill="#52525B"/>
+  <text x="200" y="358" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
+    LEATHER MOTORCYCLE JACKET
+  </text>
+</svg>

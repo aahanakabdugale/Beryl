@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F1F5F3"/>
+      <stop offset="100%" stop-color="#E2EAE5"/>
+    </linearGradient>
+    <linearGradient id="tieTeal" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0B7A5A"/>
+      <stop offset="100%" stop-color="#14B886"/>
+    </linearGradient>
+    <linearGradient id="tieCoral" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E05638"/>
+      <stop offset="100%" stop-color="#F97316"/>
+    </linearGradient>
+    <linearGradient id="tieBlue" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+    <linearGradient id="tiePurple" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#A855F7"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E5E7EB"/>
+      <stop offset="50%" stop-color="#9CA3AF"/>
+      <stop offset="100%" stop-color="#4B5563"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#064E3B" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="400" rx="28" fill="url(#bg)"/>
+
+  <!-- Subtle Cable Loop in Background -->
+  <path d="M 90 280 C 60 160, 340 140, 310 280 C 290 350, 110 350, 90 280 Z" 
+        fill="none" stroke="#D1DCD6" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Straps Group -->
+  <g filter="url(#shadow)">
+    <!-- Tie 1: Purple -->
+    <rect x="70" y="110" width="260" height="26" rx="13" fill="url(#tiePurple)"/>
+    <circle cx="95" cy="123" r="8" fill="url(#metal)"/>
+    <circle cx="305" cy="123" r="8" fill="url(#metal)"/>
+
+    <!-- Tie 2: Blue -->
+    <rect x="85" y="155" width="230" height="26" rx="13" fill="url(#tieBlue)"/>
+    <circle cx="110" cy="168" r="8" fill="url(#metal)"/>
+    <circle cx="290" cy="168" r="8" fill="url(#metal)"/>
+
+    <!-- Tie 3: Teal -->
+    <rect x="60" y="200" width="280" height="28" rx="14" fill="url(#tieTeal)"/>
+    <circle cx="88" cy="214" r="9" fill="url(#metal)"/>
+    <circle cx="312" cy="214" r="9" fill="url(#metal)"/>
+
+    <!-- Tie 4: Coral (Coiled Organizer Form) -->
+    <rect x="95" y="248" width="210" height="26" rx="13" fill="url(#tieCoral)"/>
+    <circle cx="120" cy="261" r="8" fill="url(#metal)"/>
+    <circle cx="280" cy="261" r="8" fill="url(#metal)"/>
+  </g>
+
+  <!-- Product Badge -->
+  <rect x="120" y="315" width="160" height="30" rx="15" fill="#0B7A5A"/>
+  <text x="200" y="335" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
+    SILICONE TIES (12-PK)
+  </text>
+</svg>

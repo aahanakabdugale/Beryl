@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4F4F5"/>
+      <stop offset="100%" stop-color="#E4E4E7"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="400" rx="28" fill="url(#bg)"/>
+
+  <!-- Pen Collection Arranged Diagonally -->
+  <g filter="url(#shadow)">
+    <!-- Pen 1: Black -->
+    <g transform="translate(100, 50)">
+      <rect x="0" y="30" width="14" height="200" rx="7" fill="#18181B"/>
+      <rect x="0" y="230" width="14" height="15" fill="#E4E4E7"/>
+      <polygon points="0,245 14,245 7,265" fill="#71717A"/>
+      <line x1="7" y1="265" x2="7" y2="278" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="-2" y="50" width="18" height="45" rx="3" fill="#27272A"/>
+      <rect x="4" y="50" width="6" height="55" rx="2" fill="#A1A1AA"/>
+    </g>
+
+    <!-- Pen 2: Teal / Emerald -->
+    <g transform="translate(145, 50)">
+      <rect x="0" y="30" width="14" height="200" rx="7" fill="#0B7A5A"/>
+      <rect x="0" y="230" width="14" height="15" fill="#E4E4E7"/>
+      <polygon points="0,245 14,245 7,265" fill="#71717A"/>
+      <line x1="7" y1="265" x2="7" y2="278" stroke="#0B7A5A" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="-2" y="50" width="18" height="45" rx="3" fill="#065F46"/>
+      <rect x="4" y="50" width="6" height="55" rx="2" fill="#A1A1AA"/>
+    </g>
+
+    <!-- Pen 3: Royal Blue -->
+    <g transform="translate(190, 50)">
+      <rect x="0" y="30" width="14" height="200" rx="7" fill="#2563EB"/>
+      <rect x="0" y="230" width="14" height="15" fill="#E4E4E7"/>
+      <polygon points="0,245 14,245 7,265" fill="#71717A"/>
+      <line x1="7" y1="265" x2="7" y2="278" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="-2" y="50" width="18" height="45" rx="3" fill="#1D4ED8"/>
+      <rect x="4" y="50" width="6" height="55" rx="2" fill="#A1A1AA"/>
+    </g>
+
+    <!-- Pen 4: Coral Red -->
+    <g transform="translate(235, 50)">
+      <rect x="0" y="30" width="14" height="200" rx="7" fill="#EF4444"/>
+      <rect x="0" y="230" width="14" height="15" fill="#E4E4E7"/>
+      <polygon points="0,245 14,245 7,265" fill="#71717A"/>
+      <line x1="7" y1="265" x2="7" y2="278" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="-2" y="50" width="18" height="45" rx="3" fill="#DC2626"/>
+      <rect x="4" y="50" width="6" height="55" rx="2" fill="#A1A1AA"/>
+    </g>
+
+    <!-- Pen 5: Purple -->
+    <g transform="translate(280, 50)">
+      <rect x="0" y="30" width="14" height="200" rx="7" fill="#9333EA"/>
+      <rect x="0" y="230" width="14" height="15" fill="#E4E4E7"/>
+      <polygon points="0,245 14,245 7,265" fill="#71717A"/>
+      <line x1="7" y1="265" x2="7" y2="278" stroke="#9333EA" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="-2" y="50" width="18" height="45" rx="3" fill="#7E22CE"/>
+      <rect x="4" y="50" width="6" height="55" rx="2" fill="#A1A1AA"/>
+    </g>
+  </g>
+
+  <!-- Fine tip precision mark -->
+  <path d="M 95 340 Q 200 325 305 340" fill="none" stroke="#0B7A5A" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Badge -->
+  <rect x="110" y="345" width="180" height="28" rx="14" fill="#0B7A5A"/>
+  <text x="200" y="363" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
+    BIC FINELINER PENS (0.4mm)
+  </text>
+</svg>

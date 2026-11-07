@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4F4F5"/>
+      <stop offset="100%" stop-color="#E4E4E7"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="400" rx="28" fill="url(#bg)"/>
+
+  <g filter="url(#shadow)">
+    <!-- Keyboard Solid Aluminum Frame -->
+    <rect x="40" y="110" width="320" height="180" rx="14" fill="#27272A" stroke="#3F3F46" stroke-width="2"/>
+    <rect x="48" y="118" width="304" height="164" rx="10" fill="#18181B"/>
+
+    <!-- Keychron Classic Charcoal / Grey / Orange Keycap Accent Set -->
+    <!-- Function Row -->
+    <g fill="#52525B" stroke="#27272A" stroke-width="0.8">
+      <rect x="58" y="126" width="16" height="14" rx="2" fill="#F97316"/> <!-- Orange ESC -->
+      <rect x="80" y="126" width="16" height="14" rx="2"/>
+      <rect x="100" y="126" width="16" height="14" rx="2"/>
+      <rect x="120" y="126" width="16" height="14" rx="2"/>
+      <rect x="145" y="126" width="16" height="14" rx="2"/>
+      <rect x="165" y="126" width="16" height="14" rx="2"/>
+      <rect x="185" y="126" width="16" height="14" rx="2"/>
+      <rect x="210" y="126" width="16" height="14" rx="2"/>
+      <rect x="230" y="126" width="16" height="14" rx="2"/>
+      <rect x="250" y="126" width="16" height="14" rx="2"/>
+      <rect x="275" y="126" width="16" height="14" rx="2"/>
+      <rect x="295" y="126" width="16" height="14" rx="2"/>
+      <rect x="315" y="126" width="26" height="14" rx="2" fill="#52525B"/>
+    </g>
+
+    <!-- Alphas (Light Grey Keycaps) -->
+    <g fill="#E4E4E7" stroke="#D4D4D8" stroke-width="0.8">
+      <!-- Row 2 -->
+      <rect x="58" y="148" width="16" height="16" rx="2"/>
+      <rect x="78" y="148" width="16" height="16" rx="2"/>
+      <rect x="98" y="148" width="16" height="16" rx="2"/>
+      <rect x="118" y="148" width="16" height="16" rx="2"/>
+      <rect x="138" y="148" width="16" height="16" rx="2"/>
+      <rect x="158" y="148" width="16" height="16" rx="2"/>
+      <rect x="178" y="148" width="16" height="16" rx="2"/>
+      <rect x="198" y="148" width="16" height="16" rx="2"/>
+      <rect x="218" y="148" width="16" height="16" rx="2"/>
+      <rect x="238" y="148" width="16" height="16" rx="2"/>
+      <rect x="258" y="148" width="16" height="16" rx="2"/>
+      <rect x="278" y="148" width="16" height="16" rx="2"/>
+      <rect x="298" y="148" width="22" height="16" rx="2" fill="#52525B"/>
+      <rect x="325" y="148" width="16" height="16" rx="2" fill="#52525B"/>
+
+      <!-- Row 3 -->
+      <rect x="58" y="170" width="22" height="16" rx="2" fill="#52525B"/>
+      <rect x="84" y="170" width="16" height="16" rx="2"/>
+      <rect x="104" y="170" width="16" height="16" rx="2"/>
+      <rect x="124" y="170" width="16" height="16" rx="2"/>
+      <rect x="144" y="170" width="16" height="16" rx="2"/>
+      <rect x="164" y="170" width="16" height="16" rx="2"/>
+      <rect x="184" y="170" width="16" height="16" rx="2"/>
+      <rect x="204" y="170" width="16" height="16" rx="2"/>
+      <rect x="224" y="170" width="16" height="16" rx="2"/>
+      <rect x="244" y="170" width="16" height="16" rx="2"/>
+      <rect x="264" y="170" width="16" height="16" rx="2"/>
+      <rect x="284" y="170" width="16" height="16" rx="2"/>
+      <rect x="304" y="170" width="20" height="16" rx="2" fill="#52525B"/>
+      <rect x="328" y="170" width="13" height="16" rx="2" fill="#52525B"/>
+
+      <!-- Row 4 -->
+      <rect x="58" y="192" width="26" height="16" rx="2" fill="#52525B"/>
+      <rect x="88" y="192" width="16" height="16" rx="2"/>
+      <rect x="108" y="192" width="16" height="16" rx="2"/>
+      <rect x="128" y="192" width="16" height="16" rx="2"/>
+      <rect x="148" y="192" width="16" height="16" rx="2"/>
+      <rect x="168" y="192" width="16" height="16" rx="2"/>
+      <rect x="188" y="192" width="16" height="16" rx="2"/>
+      <rect x="208" y="192" width="16" height="16" rx="2"/>
+      <rect x="228" y="192" width="16" height="16" rx="2"/>
+      <rect x="248" y="192" width="16" height="16" rx="2"/>
+      <rect x="268" y="192" width="16" height="16" rx="2"/>
+      <rect x="288" y="192" width="32" height="16" rx="2" fill="#F97316"/> <!-- Orange Enter -->
+      <rect x="324" y="192" width="17" height="16" rx="2" fill="#52525B"/>
+    </g>
+
+    <!-- Bottom Row (Ergonomic split spacebar styling) -->
+    <g fill="#52525B" stroke="#27272A" stroke-width="0.8">
+      <rect x="58" y="214" width="24" height="16" rx="2"/>
+      <rect x="86" y="214" width="18" height="16" rx="2"/>
+      <rect x="108" y="214" width="22" height="16" rx="2"/>
+      <rect x="134" y="214" width="115" height="16" rx="2" fill="#E4E4E7"/> <!-- Spacebar -->
+      <rect x="253" y="214" width="22" height="16" rx="2"/>
+      <rect x="279" y="214" width="18" height="16" rx="2"/>
+      <rect x="301" y="214" width="16" height="16" rx="2"/>
+      <rect x="321" y="214" width="20" height="16" rx="2"/>
+    </g>
+  </g>
+
+  <!-- Badge -->
+  <rect x="95" y="340" width="210" height="28" rx="14" fill="#27272A"/>
+  <text x="200" y="358" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
+    KEYCHRON ERGONOMIC WIRELESS
+  </text>
+</svg>

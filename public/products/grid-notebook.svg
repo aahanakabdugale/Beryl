@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF8F5"/>
+      <stop offset="100%" stop-color="#ECE5DC"/>
+    </linearGradient>
+    <linearGradient id="cover" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#262626"/>
+      <stop offset="100%" stop-color="#171717"/>
+    </linearGradient>
+    <pattern id="gridPattern" width="12" height="12" patternUnits="userSpaceOnUse">
+      <path d="M 12 0 L 0 0 0 12" fill="none" stroke="#D4D4D8" stroke-width="0.8"/>
+    </pattern>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="400" rx="28" fill="url(#bg)"/>
+
+  <!-- Back Notebook (Stacked 3-pack effect) -->
+  <rect x="135" y="65" width="170" height="230" rx="8" fill="#52525B" transform="rotate(6 220 180)"/>
+  <rect x="120" y="70" width="170" height="230" rx="8" fill="#71717A" transform="rotate(-3 205 185)"/>
+
+  <!-- Main Open Notebook Page with Grid -->
+  <g filter="url(#shadow)">
+    <!-- Main Cover / Base -->
+    <rect x="95" y="75" width="200" height="250" rx="10" fill="#FFFFFF" stroke="#E4E4E7" stroke-width="2"/>
+    
+    <!-- Grid Area -->
+    <rect x="130" y="95" width="145" height="210" fill="url(#gridPattern)"/>
+
+    <!-- Left Margin Line -->
+    <line x1="145" y1="95" x2="145" y2="305" stroke="#F87171" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+    <!-- Spiral Wire on Left -->
+    <rect x="90" y="75" width="30" height="250" rx="4" fill="#F4F4F5"/>
+    <g fill="#27272A">
+      <circle cx="105" cy="95" r="4.5"/>
+      <circle cx="105" cy="115" r="4.5"/>
+      <circle cx="105" cy="135" r="4.5"/>
+      <circle cx="105" cy="155" r="4.5"/>
+      <circle cx="105" cy="175" r="4.5"/>
+      <circle cx="105" cy="195" r="4.5"/>
+      <circle cx="105" cy="215" r="4.5"/>
+      <circle cx="105" cy="235" r="4.5"/>
+      <circle cx="105" cy="255" r="4.5"/>
+      <circle cx="105" cy="275" r="4.5"/>
+      <circle cx="105" cy="295" r="4.5"/>
+    </g>
+    <!-- Wire Rings -->
+    <path d="M 98 95 C 80 93, 80 97, 98 95
+             M 98 115 C 80 113, 80 117, 98 115
+             M 98 135 C 80 133, 80 137, 98 135
+             M 98 155 C 80 153, 80 157, 98 155
+             M 98 175 C 80 173, 80 177, 98 175
+             M 98 195 C 80 193, 80 197, 98 195
+             M 98 215 C 80 213, 80 217, 98 215
+             M 98 235 C 80 233, 80 237, 98 235
+             M 98 255 C 80 253, 80 257, 98 255
+             M 98 275 C 80 273, 80 277, 98 275
+             M 98 295 C 80 293, 80 297, 98 295" 
+          fill="none" stroke="#71717A" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Minimalist Pen across page -->
+  <g transform="rotate(25 240 220)">
+    <rect x="235" y="100" width="8" height="180" rx="4" fill="#0B7A5A"/>
+    <polygon points="235,280 243,280 239,295" fill="#18181B"/>
+    <rect x="233" y="115" width="12" height="18" rx="2" fill="#D4D4D8"/>
+  </g>
+
+  <!-- Badge -->
+  <rect x="110" y="340" width="180" height="28" rx="14" fill="#27272A"/>
+  <text x="200" y="358" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
+    GRID NOTEBOOK (3-PK)
+  </text>
+</svg>

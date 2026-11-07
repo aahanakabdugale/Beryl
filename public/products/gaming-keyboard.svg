@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18181B"/>
+      <stop offset="100%" stop-color="#09090B"/>
+    </linearGradient>
+    <linearGradient id="rgbGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#EF4444"/>
+      <stop offset="33%" stop-color="#3B82F6"/>
+      <stop offset="66%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="400" rx="28" fill="url(#bg)"/>
+
+  <!-- Keyboard Chassis -->
+  <g filter="url(#shadow)">
+    <!-- Back Chassis with RGB Undercarriage Glow -->
+    <rect x="45" y="115" width="310" height="175" rx="14" fill="#09090B" stroke="url(#rgbGlow)" stroke-width="2.5"/>
+    <rect x="52" y="122" width="296" height="161" rx="10" fill="#18181B" stroke="#27272A" stroke-width="1.5"/>
+
+    <!-- Keycap Matrix (TKL Gaming Layout) -->
+    <!-- Row 1 (F-Keys) -->
+    <g fill="#27272A" stroke="#3F3F46" stroke-width="0.8">
+      <rect x="62" y="130" width="16" height="14" rx="2" fill="#EF4444"/> <!-- ESC -->
+      <rect x="85" y="130" width="16" height="14" rx="2"/>
+      <rect x="105" y="130" width="16" height="14" rx="2"/>
+      <rect x="125" y="130" width="16" height="14" rx="2"/>
+      <rect x="150" y="130" width="16" height="14" rx="2"/>
+      <rect x="170" y="130" width="16" height="14" rx="2"/>
+      <rect x="190" y="130" width="16" height="14" rx="2"/>
+      <rect x="215" y="130" width="16" height="14" rx="2"/>
+      <rect x="235" y="130" width="16" height="14" rx="2"/>
+      <rect x="255" y="130" width="16" height="14" rx="2"/>
+      <rect x="280" y="130" width="16" height="14" rx="2"/>
+      <rect x="300" y="130" width="16" height="14" rx="2"/>
+      <rect x="320" y="130" width="18" height="14" rx="2" fill="#EF4444"/>
+    </g>
+
+    <!-- Row 2 (Numbers) -->
+    <g fill="#27272A" stroke="#3F3F46" stroke-width="0.8">
+      <rect x="62" y="152" width="15" height="16" rx="2"/>
+      <rect x="81" y="152" width="15" height="16" rx="2"/>
+      <rect x="100" y="152" width="15" height="16" rx="2"/>
+      <rect x="119" y="152" width="15" height="16" rx="2"/>
+      <rect x="138" y="152" width="15" height="16" rx="2"/>
+      <rect x="157" y="152" width="15" height="16" rx="2"/>
+      <rect x="176" y="152" width="15" height="16" rx="2"/>
+      <rect x="195" y="152" width="15" height="16" rx="2"/>
+      <rect x="214" y="152" width="15" height="16" rx="2"/>
+      <rect x="233" y="152" width="15" height="16" rx="2"/>
+      <rect x="252" y="152" width="15" height="16" rx="2"/>
+      <rect x="271" y="152" width="15" height="16" rx="2"/>
+      <rect x="290" y="152" width="22" height="16" rx="2"/>
+      <rect x="318" y="152" width="20" height="16" rx="2"/>
+    </g>
+
+    <!-- Row 3 (QWERTY with WASD Gaming Highlight) -->
+    <g fill="#27272A" stroke="#3F3F46" stroke-width="0.8">
+      <rect x="62" y="174" width="20" height="16" rx="2"/>
+      <rect x="86" y="174" width="15" height="16" rx="2"/>
+      <rect x="105" y="174" width="15" height="16" rx="2" fill="#DC2626"/> <!-- W -->
+      <rect x="124" y="174" width="15" height="16" rx="2"/>
+      <rect x="143" y="174" width="15" height="16" rx="2"/>
+      <rect x="162" y="174" width="15" height="16" rx="2"/>
+      <rect x="181" y="174" width="15" height="16" rx="2"/>
+      <rect x="200" y="174" width="15" height="16" rx="2"/>
+      <rect x="219" y="174" width="15" height="16" rx="2"/>
+      <rect x="238" y="174" width="15" height="16" rx="2"/>
+      <rect x="257" y="174" width="15" height="16" rx="2"/>
+      <rect x="276" y="174" width="18" height="16" rx="2"/>
+      <rect x="300" y="174" width="18" height="16" rx="2"/>
+      <rect x="322" y="174" width="16" height="16" rx="2"/>
+    </g>
+
+    <!-- Row 4 (ASDF with A S D Highlight) -->
+    <g fill="#27272A" stroke="#3F3F46" stroke-width="0.8">
+      <rect x="62" y="196" width="24" height="16" rx="2"/>
+      <rect x="90" y="196" width="15" height="16" rx="2" fill="#DC2626"/> <!-- A -->
+      <rect x="109" y="196" width="15" height="16" rx="2" fill="#DC2626"/> <!-- S -->
+      <rect x="128" y="196" width="15" height="16" rx="2" fill="#DC2626"/> <!-- D -->
+      <rect x="147" y="196" width="15" height="16" rx="2"/>
+      <rect x="166" y="196" width="15" height="16" rx="2"/>
+      <rect x="185" y="196" width="15" height="16" rx="2"/>
+      <rect x="204" y="196" width="15" height="16" rx="2"/>
+      <rect x="223" y="196" width="15" height="16" rx="2"/>
+      <rect x="242" y="196" width="15" height="16" rx="2"/>
+      <rect x="261" y="196" width="28" height="16" rx="2" fill="#3B82F6"/> <!-- Enter -->
+      <rect x="300" y="196" width="18" height="16" rx="2"/>
+      <rect x="322" y="196" width="16" height="16" rx="2"/>
+    </g>
+
+    <!-- Row 5 (Spacebar & Arrows) -->
+    <g fill="#27272A" stroke="#3F3F46" stroke-width="0.8">
+      <rect x="62" y="218" width="30" height="16" rx="2"/>
+      <rect x="96" y="218" width="15" height="16" rx="2"/>
+      <rect x="115" y="218" width="15" height="16" rx="2"/>
+      <rect x="134" y="218" width="115" height="16" rx="2" fill="#3F3F46"/> <!-- Spacebar -->
+      <rect x="253" y="218" width="15" height="16" rx="2"/>
+      <rect x="272" y="218" width="20" height="16" rx="2"/>
+      <!-- Dedicated Arrow Cluster -->
+      <rect x="310" y="218" width="16" height="16" rx="2" fill="#EF4444"/> <!-- Up Arrow -->
+    </g>
+
+    <g fill="#27272A" stroke="#3F3F46" stroke-width="0.8">
+      <rect x="290" y="240" width="16" height="16" rx="2" fill="#EF4444"/> <!-- Left -->
+      <rect x="310" y="240" width="16" height="16" rx="2" fill="#EF4444"/> <!-- Down -->
+      <rect x="330" y="240" width="16" height="16" rx="2" fill="#EF4444"/> <!-- Right -->
+    </g>
+  </g>
+
+  <!-- Badge -->
+  <rect x="90" y="335" width="220" height="28" rx="14" fill="#DC2626"/>
+  <text x="200" y="353" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
+    REDRAGON K552 MECHANICAL
+  </text>
+</svg>

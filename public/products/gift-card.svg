@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="50%" stop-color="#1D4ED8"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="400" rx="28" fill="url(#bg)"/>
+
+  <g filter="url(#shadow)">
+    <!-- Digital Gift Card -->
+    <rect x="65" y="105" width="270" height="170" rx="16" fill="url(#cardGrad)" stroke="#60A5FA" stroke-width="2"/>
+
+    <!-- EMV Chip Style -->
+    <rect x="100" y="140" width="40" height="30" rx="6" fill="#FCD34D" stroke="#D97706" stroke-width="1.5"/>
+    <line x1="120" y1="140" x2="120" y2="170" stroke="#D97706" stroke-width="1"/>
+    <line x1="100" y1="155" x2="140" y2="155" stroke="#D97706" stroke-width="1"/>
+
+    <!-- Steam Logo Circle -->
+    <circle cx="280" cy="155" r="22" fill="#FFFFFF" opacity="0.2"/>
+    <circle cx="280" cy="155" r="14" fill="#FFFFFF" opacity="0.3"/>
+
+    <!-- Card Brand Text -->
+    <text x="100" y="210" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF" letter-spacing="2">DIGITAL GIFT CARD</text>
+    <text x="100" y="235" font-family="'Courier New', monospace" font-size="13" font-weight="600" fill="#93C5FD" letter-spacing="3">•••• •••• •••• 9842</text>
+    <text x="100" y="255" font-family="-apple-system, sans-serif" font-size="10" font-weight="600" fill="#BFDBFE">VALUED AT $100.00 USD</text>
+  </g>
+
+  <!-- Badge -->
+  <rect x="115" y="340" width="170" height="28" rx="14" fill="#2563EB"/>
+  <text x="200" y="358" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">
+    STEAM DIGITAL CARD
+  </text>
+</svg>
