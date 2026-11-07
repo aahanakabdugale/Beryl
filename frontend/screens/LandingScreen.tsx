@@ -81,36 +81,53 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#F3F7F5] dark:bg-[#07100D] bg-grid-faint text-[#0B1914] dark:text-[#EDF5F2] selection:bg-[#3EE0A8]/30">
       {/* Top Navigation */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#F3F7F5]/85 dark:bg-[#07100D]/85 border-b border-[#0B7A5A]/10 dark:border-[#3EE0A8]/10 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center">
+      <header className="sticky top-0 z-50 bg-[#F4F8F6] dark:bg-[#07110E] border-b border-[#D2E0D8] dark:border-[#132A20] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        {/* Precision Accent Line */}
+        <div className="h-[2px] w-full bg-[#0B7A5A] dark:bg-[#15936D]" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-15 flex items-center justify-between gap-6">
+          {/* Brand + Telemetry */}
+          <div className="flex items-center gap-3.5">
             <Link href="/" className="cursor-pointer flex items-center gap-2.5">
-              <BerylLogo size={32} />
-              <span className="font-heading text-xl tracking-wider font-extrabold text-[#0B1914] dark:text-[#EDF5F2]">
+              <BerylLogo size={26} />
+              <span className="font-mono text-base font-extrabold tracking-[0.18em] text-[#0B1914] dark:text-[#EDF5F2]">
                 BERYL
               </span>
             </Link>
+
+            <span className="h-4 w-px bg-zinc-300 dark:bg-[#1E3E32]" />
+
+            <div className="hidden sm:flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" />
+              <span>Sandbox Live</span>
+            </div>
           </div>
 
-          {/* Mode Switcher: 2 options (Consumer App & Developer Lab) */}
+          {/* Mode Switcher */}
           <div className="flex items-center justify-center">
             <ModeSwitcher />
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Right Controls */}
+          <div className="flex items-center gap-3.5">
             <ThemeToggle />
+
+            <span className="h-4 w-px bg-zinc-300 dark:bg-[#1E3E32]" />
+
             <Link
               href="/login"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-[#0B7A5A] dark:hover:text-[#3EE0A8] px-3 py-1.5 transition-colors"
+              className="font-mono text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors px-1"
             >
               Sign in
             </Link>
-            <Button
+
+            <button
+              type="button"
               onClick={handleEnterDemo}
-              className="bg-[#0B7A5A] hover:bg-[#086147] dark:bg-[#0B7A5A] dark:hover:bg-[#14966F] text-white font-medium text-sm rounded-full px-5 shadow-sm cursor-pointer"
+              className="bg-[#0B7A5A] hover:bg-[#086147] active:bg-[#064d38] text-white font-mono text-[11px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded border border-[#086147] dark:border-[#15936D] shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_2px_rgba(0,0,0,0.12)] cursor-pointer"
             >
-              {isDeveloper ? "Open Dev Lab" : "Try the demo"}
-            </Button>
+              {isDeveloper ? "Launch Dev Lab →" : "Launch Demo →"}
+            </button>
           </div>
         </div>
       </header>
@@ -118,9 +135,9 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="relative pt-12 pb-20 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-center">
             {/* Left Column: Headlines & CTA */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-6 xl:col-span-6 space-y-6">
               {/* Main Headline */}
               <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#0B1914] dark:text-[#EDF5F2] leading-[1.1]">
                 Give your AI agent a wallet.{" "}
@@ -165,8 +182,8 @@ export default function LandingPage() {
             </div>
 
             {/* Right Column: Mandate Zones Infographic */}
-            <div className="lg:col-span-5 relative flex items-center justify-center py-4">
-              <div className="w-full max-w-xl relative">
+            <div className="lg:col-span-6 xl:col-span-6 relative flex items-center justify-center lg:justify-end py-2">
+              <div className="w-full max-w-2xl lg:max-w-none xl:scale-105 2xl:scale-110 origin-center lg:origin-right transition-transform">
                 <MandateZonesInfographic />
               </div>
             </div>
