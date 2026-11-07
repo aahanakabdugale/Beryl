@@ -144,6 +144,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    // Normalize field naming between frontend and schema
+    if (body.ask_above_cents !== undefined && body.approval_threshold_cents === undefined) {
+      body.approval_threshold_cents = body.ask_above_cents;
+    }
+    if (!body.blocked_merchants) {
+      body.blocked_merchants = [];
+    }
+
     const parseResult = CreateMandateSchema.safeParse(body);
 
     if (!parseResult.success) {
