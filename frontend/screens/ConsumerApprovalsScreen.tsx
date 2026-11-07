@@ -15,8 +15,9 @@ import {
   Zap,
   Layers,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { getProductImage } from "@/lib/catalog-images";
 
 interface Mandate {
   id: string;
@@ -123,8 +124,8 @@ export default function ConsumerApprovalsScreen() {
   }, [approvals, activeTab]);
 
   // Financial calculations
-  const totalBudgetCents = activeMandate?.total_budget_cents ?? 15000;
-  const spentCents = activeMandate?.spent_cents ?? 499;
+  const totalBudgetCents = activeMandate?.total_budget_cents ?? 0;
+  const spentCents = activeMandate?.spent_cents ?? 0;
   const remainingAllowanceCents = Math.max(0, totalBudgetCents - spentCents);
 
   // Handlers
@@ -225,6 +226,8 @@ export default function ConsumerApprovalsScreen() {
   };
 
   // Helper for Item icon
+  // Legacy removed in favor of imported getProductImage
+
   const getItemIcon = (name: string = "") => {
     const lower = name.toLowerCase();
     if (lower.includes("keyboard") || lower.includes("keychron")) return Keyboard;
@@ -407,7 +410,19 @@ export default function ConsumerApprovalsScreen() {
                         >
                           {/* Item Cell */}
                           <div className="flex items-center gap-3.5 min-w-0 pr-4">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconTileClass}`}>
+                            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-black/5 dark:border-white/10 bg-zinc-100 dark:bg-zinc-800">
+                              <img
+                                src={getProductImage(itemName)}
+                                alt={itemName}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = "/products/phone-stand.svg";
+                                }}
+                              />
+                            </div>
+                            <div className="hidden">
                               <IconComp className="h-5 w-5" />
                             </div>
                             <span
@@ -624,8 +639,6 @@ export default function ConsumerApprovalsScreen() {
               </div>
             )}
           </div>
-        </div>
-      </div>
     </ConsumerShell>
   );
 }
