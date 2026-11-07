@@ -107,7 +107,7 @@ export const PaymentRequestSchema = z.object({
   mandate_id: z.string().optional().nullable(),
   item: z.string().min(1, "Item description is required"),
   category: z.string().min(1, "Category is required"),
-  merchant: z.string().min(1, "Merchant name is required"),
+  merchant: z.string().optional().default("Vendor"),
   merchant_domain: z.string().min(1, "Merchant domain is required"),
   amount_cents: z
     .number()
