@@ -59,8 +59,8 @@ export function ConsumerShell({
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [localSidebarCollapsed, setLocalSidebarCollapsed] = useState(false);
-  const [userName, setUserName] = useState("Aahana");
-  const [userEmail, setUserEmail] = useState("aahana.kabdugale@gmail.com");
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [internalPendingCount, setInternalPendingCount] = useState<number>(0);
 
@@ -181,35 +181,42 @@ export function ConsumerShell({
   const isAnalyticsActive = currentPath === "/dashboard/analytics" || currentPath === "/consumer/analytics";
   const isAccountActive = currentPath === "/dashboard/account" || currentPath === "/consumer/account";
 
+  const isConsumerRoute = currentPath.startsWith("/consumer");
+  const walletHref = isConsumerRoute ? "/consumer/wallet" : "/dashboard";
+  const agentHref = isConsumerRoute ? "/consumer/agent" : "/dashboard/agent";
+  const approvalsHref = isConsumerRoute ? "/consumer/approvals" : "/dashboard/approvals";
+  const rulesHref = isConsumerRoute ? "/consumer/rules" : "/dashboard/mandates/new";
+  const analyticsHref = isConsumerRoute ? "/consumer/analytics" : "/dashboard/analytics";
+
   const navItems = [
     {
       label: "Wallet & Budget",
-      href: "/dashboard",
+      href: walletHref,
       icon: Wallet,
       isActive: isWalletActive,
     },
     {
       label: "Shop with agent",
-      href: "/dashboard/agent",
+      href: agentHref,
       icon: Bot,
       isActive: isAgentActive,
     },
     {
       label: "Pending approvals",
-      href: "/dashboard/approvals",
+      href: approvalsHref,
       icon: CheckSquare,
       isActive: isApprovalsActive,
       badge: pendingBadge,
     },
     {
       label: "Spending rules",
-      href: "/dashboard/mandates/new",
+      href: rulesHref,
       icon: SlidersHorizontal,
       isActive: isRulesActive,
     },
     {
       label: "Spending analytics",
-      href: "/dashboard/analytics",
+      href: analyticsHref,
       icon: BarChart3,
       isActive: isAnalyticsActive,
     },
