@@ -51,6 +51,21 @@ export default function ConsumerWalletScreen() {
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Load from local cache immediately on mount to prevent any delay/flash
+  useEffect(() => {
+    try {
+      const cachedMandate = localStorage.getItem("beryl_active_mandate_cache");
+      if (cachedMandate) {
+        const parsed = JSON.parse(cachedMandate);
+        if (parsed && parsed.name) {
+          setActiveMandate(parsed);
+          setLoading(false);
+        }
+      }
+    } catch {}
+    fetchWalletData();
+  }, []);
+
   const fetchWalletData = async () => {
     try {
       setLoading(true);
@@ -62,6 +77,9 @@ export default function ConsumerWalletScreen() {
         const list: Mandate[] = data.mandates || [];
         if (list.length > 0) {
           setActiveMandate(list[0]);
+          try {
+            localStorage.setItem("beryl_active_mandate_cache", JSON.stringify(list[0]));
+          } catch {}
         }
       }
 
@@ -86,15 +104,11 @@ export default function ConsumerWalletScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchWalletData();
-  }, []);
-
-  const totalBudgetCents = activeMandate?.total_budget_cents || 15000;
-  const spentCents = activeMandate?.spent_cents ?? 499;
+  const totalBudgetCents = activeMandate?.total_budget_cents ?? 0;
+  const spentCents = activeMandate?.spent_cents ?? 0;
   const remainingCents = Math.max(0, totalBudgetCents - spentCents);
-  const perPurchaseLimitCents = activeMandate?.per_purchase_limit_cents || 5000;
-  const askAboveCents = activeMandate?.ask_above_cents || activeMandate?.approval_threshold_cents || 1500;
+  const perPurchaseLimitCents = activeMandate?.per_purchase_limit_cents ?? 0;
+  const askAboveCents = activeMandate?.ask_above_cents || activeMandate?.approval_threshold_cents || 0;
 
   const spentPercent = totalBudgetCents > 0
     ? Math.min(100, Math.round((spentCents / totalBudgetCents) * 100))
@@ -203,7 +217,7 @@ export default function ConsumerWalletScreen() {
               </div>
             </div>
 
-            <Link href="/dashboard/approvals">
+            <Link href="/consumer/approvals">
               <button
                 type="button"
                 className="bg-[var(--approvals-amber)] text-white text-[13px] font-medium px-5 py-2 rounded-full hover:opacity-90 transition-opacity cursor-pointer shrink-0"
@@ -219,7 +233,7 @@ export default function ConsumerWalletScreen() {
           <span className="text-[14px] text-[var(--approvals-mute)]">
             Want something? Ask your shopper.
           </span>
-          <Link href="/dashboard/agent">
+          <Link href="/consumer/agent">
             <button
               type="button"
               className="bg-[var(--approvals-brand)] text-white text-[13px] font-medium px-5 py-2.5 rounded-full hover:bg-emerald-800 transition-colors cursor-pointer shrink-0"
