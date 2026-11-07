@@ -35,7 +35,7 @@ export interface SecurityEvaluationResponse {
 interface SecurityVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  isLoading: boolean;
+  isLoading?: boolean;
   data: SecurityEvaluationResponse | null;
   targetPayload?: {
     item: string;
@@ -43,20 +43,22 @@ interface SecurityVerificationModalProps {
     merchant_domain: string;
     category?: string;
   } | null;
+  payload?: any;
 }
 
 export function SecurityVerificationModal({
   isOpen,
   onClose,
-  isLoading,
+  isLoading = false,
   data,
   targetPayload,
+  payload: propPayload,
 }: SecurityVerificationModalProps) {
   const [copiedHash, setCopiedHash] = useState(false);
 
   if (!isOpen) return null;
 
-  const payload = data?.request_payload || targetPayload;
+  const payload = data?.request_payload || targetPayload || propPayload;
   const isBlocked = data?.outcome === "block";
   const isEscalated = data?.outcome === "needs_approval";
 
