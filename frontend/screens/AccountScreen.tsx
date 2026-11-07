@@ -26,6 +26,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/browser";
+import {
+  AddressBook,
+  getSavedAddresses,
+  formatAddressLines,
+} from "@/lib/addresses";
+import { AddressModal } from "@/frontend/components/address-modal";
+import { MapPin, Home, Building } from "lucide-react";
 
 interface TransactionRecord {
   id: string;
@@ -125,6 +132,8 @@ export default function AccountScreen() {
   const [notifyOnEscalation, setNotifyOnEscalation] = useState(true);
   const [dailyDigest, setDailyDigest] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [addressBook, setAddressBook] = useState<AddressBook>(getSavedAddresses());
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
   // History States
   const [historyRecords, setHistoryRecords] = useState<TransactionRecord[]>(DEFAULT_HISTORY);
@@ -429,6 +438,79 @@ export default function AccountScreen() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Saved Delivery Addresses (Home & Office) */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-[var(--approvals-card)] border border-[var(--approvals-line)] space-y-4">
+                <div className="flex items-center justify-between border-b border-[var(--approvals-line)] pb-3">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-[var(--approvals-brand)]" />
+                    <h3 className="font-semibold text-[16px] text-[var(--approvals-ink)]">
+                      Saved Delivery Addresses
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddressModalOpen(true)}
+                    className="text-xs font-semibold text-[var(--approvals-brand)] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    Manage / Edit
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                  {/* Home Card */}
+                  <div className={`p-4 rounded-xl border transition-all ${
+                    addressBook.defaultDestination === "home"
+                      ? "border-[var(--approvals-brand)] bg-[var(--approvals-brand)]/5"
+                      : "border-[var(--approvals-line)] bg-[var(--approvals-page)]"
+                  }`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 font-semibold text-sm text-[var(--approvals-ink)]">
+                        <Home className="h-4 w-4 text-[#0B7A5A]" />
+                        <span>Home</span>
+                      </div>
+                      {addressBook.defaultDestination === "home" && (
+                        <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--approvals-brand)]/15 text-[var(--approvals-brand)] font-bold">
+                          Default
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-[var(--approvals-mute)] leading-relaxed">
+                      <strong className="text-[var(--approvals-ink)] font-medium">{addressBook.home.recipient}</strong><br />
+                      {formatAddressLines(addressBook.home).line1}<br />
+                      {formatAddressLines(addressBook.home).line2}
+                    </div>
+                  </div>
+
+                  {/* Office Card */}
+                  <div className={`p-4 rounded-xl border transition-all ${
+                    addressBook.defaultDestination === "office"
+                      ? "border-[var(--approvals-brand)] bg-[var(--approvals-brand)]/5"
+                      : "border-[var(--approvals-line)] bg-[var(--approvals-page)]"
+                  }`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 font-semibold text-sm text-[var(--approvals-ink)]">
+                        <Building className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span>Office</span>
+                      </div>
+                      {addressBook.defaultDestination === "office" && (
+                        <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--approvals-brand)]/15 text-[var(--approvals-brand)] font-bold">
+                          Default
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-[var(--approvals-mute)] leading-relaxed">
+                      <strong className="text-[var(--approvals-ink)] font-medium">{addressBook.office.recipient}</strong><br />
+                      {formatAddressLines(addressBook.office).line1}<br />
+                      {formatAddressLines(addressBook.office).line2}
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[11.5px] text-[var(--approvals-mute)] pt-1">
+                  💡 When chatting with BERYL Shopper, prompt with <code className="px-1.5 py-0.5 rounded bg-[var(--approvals-page)] border border-[var(--approvals-line)] font-mono text-[11px] text-[var(--approvals-ink)]">&quot;send to home&quot;</code> or <code className="px-1.5 py-0.5 rounded bg-[var(--approvals-page)] border border-[var(--approvals-line)] font-mono text-[11px] text-[var(--approvals-ink)]">&quot;send to office&quot;</code> to automatically route your order.
+                </p>
               </div>
 
               {/* PayPal Sandbox & Autonomous Air-gap Card */}
@@ -838,6 +920,13 @@ export default function AccountScreen() {
             </div>
           </div>
         )}
+
+        {/* Address Modal */}
+        <AddressModal
+          isOpen={isAddressModalOpen}
+          onClose={() => setIsAddressModalOpen(false)}
+          onSaved={(updated) => setAddressBook(updated)}
+        />
       </div>
     </ConsumerShell>
   );
