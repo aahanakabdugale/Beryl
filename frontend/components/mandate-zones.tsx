@@ -31,7 +31,7 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
         <text
           x="20"
           y="32"
-          className="font-mono text-[11px] font-bold tracking-[0.22em] fill-[#0B7A5A] dark:fill-[#3EE0A8]"
+          className="font-mono text-[12px] font-extrabold tracking-[0.24em] fill-[#0B7A5A] dark:fill-[#3EE0A8]"
         >
           MANDATE ZONES
         </text>
@@ -70,7 +70,7 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
           x="270"
           y="37"
           textAnchor="middle"
-          className="font-mono text-[10.5px] font-bold tracking-widest fill-[#E11D48] dark:fill-[#FB7185]"
+          className="font-mono text-[11.5px] font-bold tracking-widest fill-[#E11D48] dark:fill-[#FB7185]"
         >
           SUSPICIOUS
         </text>
@@ -90,7 +90,7 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
           x="270"
           y="92"
           textAnchor="middle"
-          className="font-mono text-[10.5px] font-bold tracking-widest fill-[#D97706] dark:fill-[#FBBF24]"
+          className="font-mono text-[11.5px] font-bold tracking-widest fill-[#D97706] dark:fill-[#FBBF24]"
         >
           ABOVE $30
         </text>
@@ -108,7 +108,7 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
           x="270"
           y="147"
           textAnchor="middle"
-          className="font-mono text-[10.5px] font-bold tracking-widest fill-[#059669] dark:fill-[#3EE0A8]"
+          className="font-mono text-[11.5px] font-bold tracking-widest fill-[#059669] dark:fill-[#3EE0A8]"
         >
           WITHIN $30
         </text>
@@ -172,18 +172,18 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
 
           {/* Pill Container */}
           <rect
-            x="60"
-            y="64"
-            width="150"
-            height="30"
-            rx="15"
+            x="56"
+            y="63"
+            width="156"
+            height="32"
+            rx="16"
             className="fill-white/95 dark:fill-[#0A1D17]/95 stroke-zinc-200/90 dark:stroke-[#1B3E32]"
             strokeWidth="1"
           />
           <text
-            x="74"
-            y="83"
-            className="text-[11.5px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
+            x="70"
+            y="84"
+            className="text-[12.5px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
           >
             10 x Gift card{" "}
             <tspan className="font-bold fill-zinc-900 dark:fill-white">
@@ -211,18 +211,18 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
 
           {/* Pill Container */}
           <rect
-            x="94"
-            y="165"
-            width="132"
-            height="30"
-            rx="15"
+            x="90"
+            y="164"
+            width="138"
+            height="32"
+            rx="16"
             className="fill-white/95 dark:fill-[#0A1D17]/95 stroke-zinc-200/90 dark:stroke-[#1B3E32]"
             strokeWidth="1"
           />
           <text
-            x="108"
-            y="184"
-            className="text-[11.5px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
+            x="104"
+            y="185"
+            className="text-[12.5px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
           >
             Phone stand{" "}
             <tspan className="font-bold fill-zinc-900 dark:fill-white">
@@ -239,18 +239,18 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
 
           {/* Pill Container */}
           <rect
-            x="104"
-            y="261"
-            width="116"
-            height="30"
-            rx="15"
+            x="100"
+            y="260"
+            width="122"
+            height="32"
+            rx="16"
             className="fill-white/95 dark:fill-[#0A1D17]/95 stroke-zinc-200/90 dark:stroke-[#1B3E32]"
             strokeWidth="1"
           />
           <text
-            x="118"
-            y="280"
-            className="text-[11.5px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
+            x="114"
+            y="281"
+            className="text-[12.5px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
           >
             Keyboard{" "}
             <tspan className="font-bold fill-zinc-900 dark:fill-white">
@@ -265,8 +265,8 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
         <g transform="translate(495, 51)">
           {/* Card Box */}
           <rect
-            width="236"
-            height="72"
+            width="242"
+            height="74"
             rx="16"
             className="fill-white/90 dark:fill-[#0B211A]/90 stroke-[#10B981]/50 dark:stroke-[#3EE0A8]/40 shadow-sm"
             strokeWidth="1.2"
@@ -274,14 +274,14 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
           {/* Circular Badge Icon */}
           <circle
             cx="32"
-            cy="36"
+            cy="37"
             r="16"
             fill="none"
             className="stroke-[#059669] dark:stroke-[#3EE0A8]"
             strokeWidth="1.5"
           />
           <path
-            d="M 26 36.5 L 30 40.5 L 38 31.5"
+            d="M 26 37.5 L 30 41.5 L 38 32.5"
             fill="none"
             className="stroke-[#059669] dark:stroke-[#3EE0A8]"
             strokeWidth="2"
@@ -291,15 +291,15 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
           {/* Text */}
           <text
             x="58"
-            y="31"
-            className="font-mono text-[12px] font-extrabold tracking-wider fill-[#059669] dark:fill-[#3EE0A8]"
+            y="32"
+            className="font-mono text-[13px] font-extrabold tracking-wider fill-[#059669] dark:fill-[#3EE0A8]"
           >
             APPROVED
           </text>
           <text
             x="58"
-            y="49"
-            className="text-[11.5px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
+            y="51"
+            className="text-[12px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
           >
             Paid in PayPal sandbox
           </text>
@@ -309,8 +309,8 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
         <g transform="translate(495, 174)">
           {/* Card Box */}
           <rect
-            width="236"
-            height="72"
+            width="242"
+            height="74"
             rx="16"
             className="fill-white/90 dark:fill-[#201808]/90 stroke-[#F59E0B]/50 dark:stroke-[#FBBF24]/40 shadow-sm"
             strokeWidth="1.2"
@@ -318,7 +318,7 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
           {/* Circular Badge Icon */}
           <circle
             cx="32"
-            cy="36"
+            cy="37"
             r="16"
             fill="none"
             stroke="#F59E0B"
@@ -326,26 +326,26 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
           />
           <line
             x1="32"
-            y1="28"
+            y1="29"
             x2="32"
-            y2="37"
+            y2="38"
             stroke="#F59E0B"
             strokeWidth="2.2"
             strokeLinecap="round"
           />
-          <circle cx="32" cy="43" r="1.2" fill="#F59E0B" />
+          <circle cx="32" cy="44" r="1.2" fill="#F59E0B" />
           {/* Text */}
           <text
             x="58"
-            y="31"
-            className="font-mono text-[12px] font-extrabold tracking-wider fill-[#D97706] dark:fill-[#FBBF24]"
+            y="32"
+            className="font-mono text-[13px] font-extrabold tracking-wider fill-[#D97706] dark:fill-[#FBBF24]"
           >
             ASK YOU FIRST
           </text>
           <text
             x="58"
-            y="49"
-            className="text-[11.5px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
+            y="51"
+            className="text-[12px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
           >
             Above your $30 limit
           </text>
@@ -355,8 +355,8 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
         <g transform="translate(495, 297)">
           {/* Card Box */}
           <rect
-            width="236"
-            height="72"
+            width="242"
+            height="74"
             rx="16"
             className="fill-white/90 dark:fill-[#230C12]/90 stroke-[#F43F5E]/50 dark:stroke-[#FB7185]/40 shadow-sm"
             strokeWidth="1.2"
@@ -364,14 +364,14 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
           {/* Circular Badge Icon */}
           <circle
             cx="32"
-            cy="36"
+            cy="37"
             r="16"
             fill="none"
             stroke="#F43F5E"
             strokeWidth="1.5"
           />
           <path
-            d="M 27 31 L 37 41 M 37 31 L 27 41"
+            d="M 27 32 L 37 42 M 37 32 L 27 42"
             fill="none"
             stroke="#F43F5E"
             strokeWidth="2"
@@ -380,15 +380,15 @@ export function MandateZonesInfographic({ className = "" }: { className?: string
           {/* Text */}
           <text
             x="58"
-            y="31"
-            className="font-mono text-[12px] font-extrabold tracking-wider fill-[#E11D48] dark:fill-[#FB7185]"
+            y="32"
+            className="font-mono text-[13px] font-extrabold tracking-wider fill-[#E11D48] dark:fill-[#FB7185]"
           >
             BLOCKED
           </text>
           <text
             x="58"
-            y="49"
-            className="text-[11.5px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
+            y="51"
+            className="text-[12px] font-sans font-medium fill-zinc-600 dark:fill-zinc-300"
           >
             SUSPICIOUS, injection
           </text>
