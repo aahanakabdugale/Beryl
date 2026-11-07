@@ -93,21 +93,6 @@ export default function ConsumerApprovalsScreen() {
 
   useEffect(() => {
     loadData();
-
-    // Fetch user profile name
-    async function getUserName() {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.email) {
-          const first = user.email.split("@")[0].split(".")[0];
-          setUserName(first.charAt(0).toUpperCase() + first.slice(1));
-        }
-      } catch {
-        // fallback to default
-      }
-    }
-    getUserName();
   }, []);
 
   // Counts
