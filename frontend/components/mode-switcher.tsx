@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { ShoppingBag, Terminal } from "lucide-react";
 import { useViewMode } from "./view-mode-context";
 
 export function ModeSwitcher({ className = "" }: { className?: string }) {
@@ -9,40 +8,49 @@ export function ModeSwitcher({ className = "" }: { className?: string }) {
 
   return (
     <div
-      className={`inline-flex items-center p-1 rounded-full bg-zinc-200/60 dark:bg-[#12241E] border border-zinc-300/60 dark:border-[#1E3A31] text-xs font-semibold ${className}`}
+      role="group"
+      aria-label="Application View Mode"
+      className={`inline-flex items-center p-1 rounded-md bg-[#E4ECE7] dark:bg-[#060D0A] border border-[#CCD8D1] dark:border-[#162B21] shadow-inner ${className}`}
     >
-      {/* Consumer App Option */}
+      {/* Consumer Option */}
       <button
         type="button"
         onClick={() => setViewMode("consumer")}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all cursor-pointer ${
+        className={`flex items-center gap-2 px-3.5 py-1.5 rounded text-[11px] font-mono uppercase tracking-wider font-bold transition-all cursor-pointer ${
           viewMode === "consumer"
-            ? "bg-white dark:bg-[#0B7A5A] text-zinc-900 dark:text-white shadow-xs font-bold"
-            : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+            ? "bg-white dark:bg-[#0F221A] text-[#0B7A5A] dark:text-[#3EE0A8] border border-[#CCD8D1] dark:border-[#1E3F31] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+            : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
         }`}
         aria-pressed={viewMode === "consumer"}
       >
-        <ShoppingBag className="h-3.5 w-3.5 text-[#0B7A5A] dark:text-[#3EE0A8]" />
-        <span>Consumer App</span>
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${
+            viewMode === "consumer" ? "bg-[#0B7A5A] dark:bg-[#3EE0A8]" : "bg-zinc-400 dark:bg-zinc-600"
+          }`}
+        />
+        <span>Consumer</span>
       </button>
 
       {/* Developer Lab Option */}
       <button
         type="button"
         onClick={() => setViewMode("developer")}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all cursor-pointer ${
+        className={`flex items-center gap-2 px-3.5 py-1.5 rounded text-[11px] font-mono uppercase tracking-wider font-bold transition-all cursor-pointer ${
           viewMode === "developer"
-            ? "bg-[#07100D] text-[#3EE0A8] border border-[#3EE0A8]/30 shadow-xs font-bold font-mono"
-            : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-mono"
+            ? "bg-[#08130F] dark:bg-[#0F221A] text-[#3EE0A8] border border-[#162D24] dark:border-[#1E3F31] shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+            : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
         }`}
         aria-pressed={viewMode === "developer"}
       >
-        <Terminal className="h-3.5 w-3.5 text-emerald-500 dark:text-[#3EE0A8]" />
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${
+            viewMode === "developer" ? "bg-[#3EE0A8]" : "bg-zinc-400 dark:bg-zinc-600"
+          }`}
+        />
         <span>Developer Lab</span>
-        <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-[#0B7A5A] dark:text-[#3EE0A8] font-bold">
-          DEV
-        </span>
       </button>
     </div>
   );
 }
+
+export default ModeSwitcher;
