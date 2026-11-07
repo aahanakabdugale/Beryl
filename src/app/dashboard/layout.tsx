@@ -4,80 +4,165 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import {
-  Copy,
-  Check,
-  Lock,
-  LogOut,
-  Menu,
-  X,
-  FileSpreadsheet,
-  ShieldAlert,
-  Bot,
-  Sliders,
-  CheckSquare,
-  BarChart3,
-  LayoutDashboard,
-  Maximize2,
-  Minimize2,
-  ChevronRight,
-  Terminal,
-} from "lucide-react";
 import { RealtimeListener } from "@/components/realtime-listener";
 import { useViewMode } from "@/components/view-mode-context";
 import { useInspector } from "@/components/inspector-context";
 import { DeveloperCommandBar } from "@/components/developer-command-bar";
-import { createClient } from "@/lib/supabase/browser";
+import { BerylLogo } from "@/components/beryl-logo";
 import { toast } from "sonner";
 
-const EXPLORER_MODULES = [
-  { id: "overview", name: "overview.ts", href: "/dashboard", icon: LayoutDashboard },
-  { id: "audit", name: "audit_log.grid", href: "/dashboard/audit", icon: FileSpreadsheet },
-  { id: "attack", name: "attack_lab", href: "/dashboard/attack-lab", icon: ShieldAlert },
-  { id: "tracing", name: "agent_tracing", href: "/dashboard/agent", icon: Bot },
-  { id: "policy", name: "policy.json", href: "/dashboard/mandates/new", icon: Sliders },
-  { id: "escalations", name: "escalations", href: "/dashboard/approvals", icon: CheckSquare },
-  { id: "analytics", name: "analytics", href: "/dashboard/analytics", icon: BarChart3 },
+interface NavTabItem {
+  id: string;
+  name: string;
+  href: string;
+}
+
+const NAV_TABS: NavTabItem[] = [
+  { id: "overview", name: "Overview", href: "/dashboard" },
+  { id: "audit", name: "Audit Ledger", href: "/dashboard/audit" },
+  { id: "attack", name: "Attack Lab", href: "/dashboard/attack-lab" },
+  { id: "tracing", name: "Agent Tracing", href: "/dashboard/agent" },
+  { id: "policy", name: "Policy Mandates", href: "/dashboard/mandates/new" },
+  { id: "approvals", name: "Order Reviews", href: "/dashboard/approvals" },
+  { id: "analytics", name: "Analytics", href: "/dashboard/analytics" },
 ];
 
-function SyntaxHighlightedJson({ data }: { data: Record<string, any> }) {
-  const formatted = JSON.stringify(data, null, 2);
-  const lines = formatted.split("\n");
+function InspectorPanel({
+  payload,
+  onClose,
+}: {
+  payload: { title?: string; data?: any };
+  onClose: () => void;
+}) {
+  const [viewMode, setViewMode] = useState<"fields" | "json">("fields");
+  const [copied, setCopied] = useState(false);
+
+  const data = payload.data || {};
+  const dataEntries = typeof data === "object" && data !== null && !Array.isArray(data)
+    ? Object.entries(data)
+    : [];
+
+  const handleCopy = () => {
+    try {
+      navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+      setCopied(true);
+      toast.success("Payload copied");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy JSON");
+    }
+  };
+
+  const payloadByteSize = new TextEncoder().encode(JSON.stringify(data)).length;
 
   return (
-    <pre className="font-mono text-[11px] leading-relaxed select-text whitespace-pre-wrap break-all p-1">
-      {lines.map((line, idx) => {
-        const keyMatch = line.match(/^(\s*)"([^"]+)":\s*(.*)$/);
-        if (keyMatch) {
-          const indent = keyMatch[1];
-          const key = keyMatch[2];
-          const val = keyMatch[3];
+    <aside className="w-[420px] max-w-[90vw] shrink-0 border-l border-zinc-200 dark:border-[#162E25] bg-white dark:bg-[#07100D] flex flex-col justify-between font-mono text-xs z-30 shadow-xl">
+      {/* Top Header */}
+      <div className="p-3.5 border-b border-zinc-200 dark:border-[#162E25] flex items-center justify-between bg-zinc-50/50 dark:bg-[#091410]">
+        <span className="font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
+          Security Inspector
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="px-2 py-0.5 rounded border border-zinc-200 dark:border-[#162E25] bg-white dark:bg-[#0D1C17] text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer text-[11px]"
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-1.5 py-0.5 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
 
-          let valColor = "text-[#A7F3D0] dark:text-[#A7F3D0]";
-          if (val.includes("BLOCK") || val.includes("REJECT")) valColor = "text-rose-500 dark:text-rose-400 font-bold";
-          else if (val.includes("APPROV")) valColor = "text-emerald-500 dark:text-[#3EE0A8] font-bold";
-          else if (val.includes("NEEDS_APPROVAL") || val.includes("PENDING")) valColor = "text-amber-500 dark:text-amber-400 font-bold";
-          else if (!isNaN(Number(val.replace(/,$/, "")))) valColor = "text-amber-400 dark:text-amber-300 font-mono";
-          else if (val.startsWith('"')) valColor = "text-emerald-300 dark:text-[#6EE7B7]";
-          else if (val.includes("true") || val.includes("false") || val.includes("null")) valColor = "text-sky-400";
+      {/* Target Record Bar & View Mode Toggle */}
+      <div className="px-3.5 py-2 border-b border-zinc-100 dark:border-[#162E25] flex items-center justify-between bg-white dark:bg-[#07100D] text-[11px]">
+        <span className="text-[#0B7A5A] dark:text-[#3EE0A8] font-bold">
+          {payload.title || "PAYLOAD_SNAPSHOT"}
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setViewMode("fields")}
+            className={`px-2 py-0.5 rounded cursor-pointer ${
+              viewMode === "fields"
+                ? "bg-zinc-200 dark:bg-[#162E25] text-zinc-900 dark:text-zinc-100 font-bold"
+                : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+            }`}
+          >
+            Fields
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("json")}
+            className={`px-2 py-0.5 rounded cursor-pointer ${
+              viewMode === "json"
+                ? "bg-zinc-200 dark:bg-[#162E25] text-zinc-900 dark:text-zinc-100 font-bold"
+                : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+            }`}
+          >
+            JSON
+          </button>
+        </div>
+      </div>
 
-          return (
-            <div key={idx} className="hover:bg-black/5 dark:hover:bg-white/5 py-0.5 rounded px-1 transition-colors">
-              <span>{indent}</span>
-              <span className="text-emerald-600 dark:text-[#3EE0A8] font-semibold">&quot;{key}&quot;</span>
-              <span className="text-zinc-500">: </span>
-              <span className={`${valColor} break-all`}>{val}</span>
-            </div>
-          );
-        }
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {viewMode === "fields" && dataEntries.length > 0 ? (
+          <div className="divide-y divide-zinc-100 dark:divide-[#162E25]">
+            {dataEntries.map(([key, val]) => {
+              const valStr = typeof val === "object" ? JSON.stringify(val, null, 2) : String(val);
+              const isVerdict = key === "verdict" || key === "decision" || key === "outcome";
+              const isRule = key === "rule" || key === "rule_code";
 
-        return (
-          <div key={idx} className="text-zinc-500 dark:text-zinc-400 py-0.5 px-1 break-all">
-            {line}
+              let valColor = "text-zinc-800 dark:text-zinc-200";
+              if (isVerdict) {
+                const upper = String(val).toUpperCase();
+                if (upper.includes("APPROV")) valColor = "text-emerald-600 dark:text-[#3EE0A8] font-bold";
+                else if (upper.includes("NEEDS") || upper.includes("PENDING") || upper.includes("REVIEW")) valColor = "text-amber-600 dark:text-amber-400 font-bold";
+                else valColor = "text-rose-600 dark:text-rose-400 font-bold";
+              } else if (isRule) {
+                valColor = "text-[#0B7A5A] dark:text-[#3EE0A8] font-semibold";
+              }
+
+              return (
+                <div key={key} className="py-2.5 flex flex-col gap-1">
+                  <span className="text-zinc-400 dark:text-zinc-500 text-[11px] font-medium uppercase tracking-wider">
+                    {key}
+                  </span>
+                  <div className={`text-xs break-words whitespace-pre-wrap leading-relaxed ${valColor}`}>
+                    {typeof val === "object" ? (
+                      <pre className="p-2 rounded bg-zinc-50 dark:bg-[#0D1C17] border border-zinc-200 dark:border-[#162E25] overflow-x-auto text-[11px]">
+                        {valStr}
+                      </pre>
+                    ) : (
+                      valStr
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
-    </pre>
+        ) : (
+          <div className="p-2.5 rounded bg-zinc-50 dark:bg-[#091410] border border-zinc-200 dark:border-[#162E25]">
+            <pre className="text-xs font-mono whitespace-pre-wrap break-words leading-relaxed text-zinc-800 dark:text-zinc-200">
+              {JSON.stringify(data, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
+
+      {/* Footer Telemetry */}
+      <div className="px-4 py-2 border-t border-zinc-200 dark:border-[#162E25] bg-zinc-50/50 dark:bg-[#091410] text-[10px] text-zinc-500 flex items-center justify-between">
+        <span>{dataEntries.length} attributes</span>
+        <span>{payloadByteSize} bytes</span>
+      </div>
+    </aside>
   );
 }
 
@@ -85,61 +170,17 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { isDeveloper, lockDeveloperMode } = useViewMode();
-  const { inspectorPayload, isInspectorVisible, toggleInspector } = useInspector();
+  const { inspectorPayload, isInspectorVisible, toggleInspector, setIsInspectorVisible } = useInspector();
   const { resolvedTheme, setTheme } = useTheme();
 
   const [mounted, setMounted] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userEmail, setUserEmail] = useState<string>("demo@beryl.dev");
-  const [copiedJson, setCopiedJson] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    async function loadUser() {
-      try {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user?.email) {
-          setUserEmail(user.email);
-        }
-      } catch {
-        // demo fallback
-      }
-    }
-    loadUser();
-  }, []);
-
-  const handleSignOut = async () => {
-    try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      document.cookie = "beryl_demo_mode=; path=/; max-age=0";
-      toast.success("Signed out successfully");
-      router.push("/");
-    } catch {
-      router.push("/");
-    }
-  };
-
-  const handleCopyJson = () => {
-    try {
-      navigator.clipboard.writeText(JSON.stringify(inspectorPayload.data, null, 2));
-      setCopiedJson(true);
-      toast.success("Inspector payload copied to clipboard");
-      setTimeout(() => setCopiedJson(false), 2000);
-    } catch {
-      toast.error("Failed to copy JSON");
-    }
-  };
-
   const isDark = mounted ? resolvedTheme === "dark" : true;
 
-  // If consumer mode, render the standard ConsumerShell cleanly
   if (!isDeveloper) {
     return (
       <div className="min-h-screen bg-[var(--approvals-page)] text-[var(--approvals-ink)]">
@@ -150,222 +191,119 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F4F2] dark:bg-[#07100D] text-zinc-900 dark:text-zinc-100 flex flex-col font-mono selection:bg-[#3EE0A8]/30 transition-colors">
+    <div className="min-h-screen bg-[#F8FAF9] dark:bg-[#07100D] text-zinc-900 dark:text-zinc-100 flex flex-col">
       <RealtimeListener />
 
-      {/* ============================================================== */}
-      {/* 1. TOP IDE BAR HEADER                                          */}
-      {/* ============================================================== */}
-      <header className="h-14 border-b border-zinc-200 dark:border-[#173026] bg-white/90 dark:bg-[#091511]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-4 sticky top-0 z-40 transition-colors">
-        {/* Left: [B] BERYL + Developer Lab Badge */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer"
-            aria-label="Toggle explorer"
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-
-          <Link href="/" className="flex items-center gap-2.5 focus:outline-none">
-            <div className="w-7 h-7 rounded-lg bg-[#0B7A5A] dark:bg-[#10B981] text-white dark:text-[#07100D] font-bold text-sm flex items-center justify-center font-heading shadow-xs">
-              B
-            </div>
-            <span className="font-heading font-extrabold text-base tracking-wider text-zinc-900 dark:text-[#EDF5F2]">
-              BERYL
-            </span>
-          </Link>
-
-          <span className="px-2.5 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-[#0B7A5A] dark:text-[#3EE0A8] text-[11px] font-semibold tracking-wide hidden sm:inline-block">
-            Developer Lab
-          </span>
-        </div>
-
-        {/* Right: Engine status, Dark/Light Switch & Lock lab */}
-        <div className="flex items-center gap-3 sm:gap-4">
-          {/* Status pill: ● engine 0ms · air-gap enforced */}
-          <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-[#0E1F1A] border border-emerald-200 dark:border-[#1B3B2E] text-[11px] text-[#0B7A5A] dark:text-[#3EE0A8] font-medium">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>engine 0ms · air-gap enforced</span>
-          </div>
-
-          {/* Inspector Toggle Button */}
-          <button
-            type="button"
-            onClick={toggleInspector}
-            className={`hidden xl:inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-mono transition-colors cursor-pointer border ${
-              isInspectorVisible
-                ? "bg-emerald-50 dark:bg-[#122A21] text-[#0B7A5A] dark:text-[#3EE0A8] border-emerald-200 dark:border-[#1F4638]"
-                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 border-zinc-200 dark:border-[#173026]"
-            }`}
-            title="Toggle JSON Inspector"
-          >
-            <Terminal className="h-3.5 w-3.5" />
-            <span>Inspector</span>
-          </button>
-
-          {/* Theme Switch: Dark [toggle] Light */}
-          <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-500 dark:text-zinc-400 select-none">
-            <span className={isDark ? "text-zinc-400 dark:text-[#A7D7C5] font-semibold" : "text-zinc-400"}>
-              Dark
-            </span>
-            <button
-              type="button"
-              onClick={() => setTheme(isDark ? "light" : "dark")}
-              className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer flex items-center ${
-                isDark ? "bg-[#1B382F]" : "bg-emerald-600"
-              }`}
-              title="Toggle theme"
-              aria-label="Toggle theme"
+      {/* Institutional Top Bar Navigation */}
+      <header className="bg-white dark:bg-[#07100D] border-b border-zinc-200 dark:border-[#162E25] px-6 sticky top-0 z-40 select-none">
+        <div className="flex items-center justify-between gap-6 h-14">
+          
+          {/* Left: Brand Identity */}
+          <div className="flex items-center gap-6 shrink-0">
+            <Link 
+              href="/"
+              className="flex items-center gap-2.5 shrink-0"
+              title="BERYL Autonomous Finance"
             >
-              <div
-                className={`w-4 h-4 rounded-full bg-white shadow-xs transition-transform ${
-                  isDark ? "translate-x-0" : "translate-x-4"
-                }`}
-              />
-            </button>
-            <span className={!isDark ? "text-zinc-900 font-bold" : "text-zinc-500"}>
-              Light
-            </span>
-          </div>
+              <BerylLogo size={32} />
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-base tracking-wider text-zinc-950 dark:text-white leading-none">
+                  BERYL
+                </span>
+                <span className="text-[10px] uppercase font-mono tracking-widest text-[#0B7A5A] dark:text-[#3EE0A8] font-bold px-1.5 py-0.5 rounded border border-[#0B7A5A]/30 bg-emerald-500/10">
+                  DEV LAB
+                </span>
+              </div>
+            </Link>
 
-          {/* Lock Lab Button */}
-          <button
-            type="button"
-            onClick={lockDeveloperMode}
-            className="px-3.5 py-1.5 rounded-xl border border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 text-xs font-mono font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
-            title="Lock Developer Lab and return to Consumer App"
-          >
-            <Lock className="h-3.5 w-3.5" />
-            <span>Lock lab</span>
-          </button>
-        </div>
-      </header>
+            {/* Separator */}
+            <div className="h-5 w-[1px] bg-zinc-200 dark:border-[#162E25] shrink-0" />
 
-      {/* ============================================================== */}
-      {/* 2. MAIN 3-PANEL IDE BODY                                       */}
-      {/* ============================================================== */}
-      <div className="flex-1 flex overflow-hidden p-3 sm:p-4 gap-3">
-        {/* ============================================================ */}
-        {/* PANEL 1: EXPLORER                                             */}
-        {/* ============================================================ */}
-        <aside
-          className={`${
-            mobileMenuOpen ? "flex" : "hidden"
-          } md:flex flex-col w-56 lg:w-60 shrink-0 bg-white dark:bg-[#0B1713] border border-zinc-200 dark:border-[#173026] rounded-2xl p-4 justify-between transition-colors z-30 shadow-xs fixed md:relative top-16 md:top-0 bottom-4 left-3 right-3 md:left-0 md:right-0 md:bottom-0`}
-        >
-          <div className="space-y-4">
-            <div className="text-[11px] font-mono uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold px-2">
-              EXPLORER
-            </div>
-
-            <nav className="space-y-1">
-              {EXPLORER_MODULES.map((item) => {
+            {/* Navigation Tabs (Text Only, Institutional Underline Accent) */}
+            <nav className="flex items-center gap-1 overflow-x-auto scrollbar-none" aria-label="Main Navigation">
+              {NAV_TABS.map((tab) => {
                 const isActive =
-                  item.href === "/dashboard"
+                  tab.href === "/dashboard"
                     ? pathname === "/dashboard"
-                    : pathname.startsWith(item.href);
+                    : pathname.startsWith(tab.href);
 
                 return (
                   <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-mono transition-all ${
+                    key={tab.href}
+                    href={tab.href}
+                    className={`relative px-3.5 py-4 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
                       isActive
-                        ? "bg-emerald-500/10 text-[#0B7A5A] dark:text-[#3EE0A8] font-bold border border-emerald-500/25 shadow-xs"
-                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/70 dark:hover:bg-[#0F221B]"
+                        ? "text-zinc-950 dark:text-white font-semibold"
+                        : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
                     }`}
                   >
-                    <item.icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-[#0B7A5A] dark:text-[#3EE0A8]" : "opacity-60"}`} />
-                    <span className="truncate">{item.name}</span>
+                    <span>{tab.name}</span>
+                    {isActive && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0B7A5A] dark:bg-[#3EE0A8]" />
+                    )}
                   </Link>
                 );
               })}
             </nav>
           </div>
 
-          {/* Explorer Bottom: Active Account */}
-          <div className="pt-3 border-t border-zinc-200 dark:border-[#173026] space-y-2 text-xs">
-            <div className="px-2 py-1.5 rounded-lg bg-zinc-50 dark:bg-[#08120E] text-[11px] truncate">
-              <span className="text-zinc-400 block text-[9px] uppercase tracking-wider">Session</span>
-              <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate block mt-0.5">
-                {userEmail}
-              </span>
-            </div>
-
+          {/* Right: Institutional Utility Controls */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Security Inspector Toggle */}
             <button
               type="button"
-              onClick={handleSignOut}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 text-xs transition-colors cursor-pointer"
+              onClick={toggleInspector}
+              className={`px-3 py-1.5 rounded text-xs font-mono font-medium transition-colors cursor-pointer border ${
+                isInspectorVisible
+                  ? "bg-emerald-50 dark:bg-[#12241E] border-[#0B7A5A] text-[#0B7A5A] dark:text-[#3EE0A8]"
+                  : "border-zinc-200 dark:border-[#162E25] bg-white dark:bg-[#0D1C17] text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white"
+              }`}
+              title="Toggle Security Payload Inspector"
             >
-              <LogOut className="h-3.5 w-3.5" />
-              <span>Sign Out</span>
+              Inspector
+            </button>
+
+            {/* Dark / Light Toggle */}
+            <button
+              type="button"
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              className="px-3 py-1.5 rounded border border-zinc-200 dark:border-[#162E25] bg-white dark:bg-[#0D1C17] text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white text-xs font-mono font-medium transition-colors cursor-pointer"
+              title="Toggle Theme"
+            >
+              {isDark ? "Light" : "Dark"}
+            </button>
+
+            {/* Lock Lab Button */}
+            <button
+              type="button"
+              onClick={lockDeveloperMode}
+              className="px-3 py-1.5 rounded border border-zinc-200 dark:border-[#162E25] bg-white dark:bg-[#0D1C17] text-zinc-600 dark:text-zinc-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 text-xs font-mono font-medium transition-colors cursor-pointer"
+              title="Exit Developer Lab to Consumer View"
+            >
+              Lock Lab
             </button>
           </div>
-        </aside>
+        </div>
+      </header>
 
-        {/* ============================================================ */}
-        {/* PANEL 2: WORKSPACE / EDITOR STAGE                             */}
-        {/* ============================================================ */}
-        <main className="flex-1 min-w-0 bg-white dark:bg-[#0B1713] border border-zinc-200 dark:border-[#173026] rounded-2xl flex flex-col overflow-hidden shadow-xs transition-colors">
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      {/* Main Workspace */}
+      <div className="flex-1 flex overflow-hidden relative">
+        <main className="flex-1 overflow-y-auto">
+          <div className="w-full px-6 sm:px-10 py-6 space-y-6">
             {children}
           </div>
         </main>
 
-        {/* ============================================================ */}
-        {/* PANEL 3: INSPECTOR                                           */}
-        {/* ============================================================ */}
+        {/* Slide-out Inspector Drawer */}
         {isInspectorVisible && (
-          <aside className="hidden xl:flex flex-col w-72 lg:w-80 shrink-0 bg-white dark:bg-[#0B1713] border border-zinc-200 dark:border-[#173026] rounded-2xl p-4 justify-between transition-colors shadow-xs font-mono text-xs">
-            <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
-              {/* Inspector Header */}
-              <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-bold pb-2 border-b border-zinc-200 dark:border-[#173026]">
-                <div className="flex items-center gap-1.5">
-                  <Terminal className="h-3.5 w-3.5 text-[#0B7A5A] dark:text-[#3EE0A8]" />
-                  <span>INSPECTOR</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleCopyJson}
-                    className="p-1 rounded text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-                    title="Copy formatted JSON"
-                  >
-                    {copiedJson ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Title Tag */}
-              <div className="flex items-center justify-between text-[10px] text-zinc-400">
-                <span className="font-semibold text-emerald-700 dark:text-[#3EE0A8]">
-                  {inspectorPayload.title || "PAYLOAD_SNAPSHOT"}
-                </span>
-                <span>0ms latency</span>
-              </div>
-
-              {/* Formatted Code Block */}
-              <div className="flex-1 overflow-y-auto rounded-xl bg-zinc-50 dark:bg-[#07100D] border border-zinc-200 dark:border-[#173026] p-2.5">
-                <SyntaxHighlightedJson data={inspectorPayload.data} />
-              </div>
-            </div>
-
-            {/* Inspector Footer Status */}
-            <div className="pt-3 border-t border-zinc-200 dark:border-[#173026] text-[10px] text-zinc-400 flex items-center justify-between">
-              <span>Policy: Deterministic</span>
-              <span className="text-emerald-600 dark:text-[#3EE0A8] font-bold">AIR-GAP ACTIVE</span>
-            </div>
-          </aside>
+          <InspectorPanel
+            payload={inspectorPayload}
+            onClose={() => setIsInspectorVisible(false)}
+          />
         )}
       </div>
 
-      {/* ============================================================== */}
-      {/* 3. BOTTOM TERMINAL / COMMAND BAR                               */}
-      {/* ============================================================== */}
+      {/* Bottom Command Terminal */}
       <DeveloperCommandBar />
     </div>
   );
