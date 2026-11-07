@@ -50,6 +50,7 @@ export function createAgentTools(
             price_cents: p.price_cents,
             price_formatted: `$${(p.price_cents / 100).toFixed(2)}`,
             currency: p.currency,
+            image_url: p.image_url || null,
             in_stock: p.in_stock,
             untrusted_metadata: p.untrusted_metadata ? p.untrusted_metadata.slice(0, 100) : undefined,
           })),
