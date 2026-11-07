@@ -35,10 +35,13 @@ export const metadata: Metadata = {
     "BERYL is the programmable policy guard between autonomous AI agents and PayPal. Give your AI agent a wallet. Not a blank check.",
   icons: {
     icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico" },
+      { url: "/icon.svg?v=2", type: "image/svg+xml" },
+      { url: "/favicon-32x32.png?v=2", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png?v=2", sizes: "16x16", type: "image/png" },
+      { url: "/favicon.ico?v=2" },
     ],
-    shortcut: "/icon.svg",
+    shortcut: "/icon.svg?v=2",
+    apple: "/apple-touch-icon.png?v=2",
   },
 };
 
@@ -56,6 +59,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${bricolage.variable} ${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="icon" href="/icon.svg?v=2" type="image/svg+xml" />
+        <link rel="icon" href="/favicon-32x32.png?v=2" sizes="32x32" type="image/png" />
+        <link rel="icon" href="/favicon-16x16.png?v=2" sizes="16x16" type="image/png" />
+        <link rel="shortcut icon" href="/favicon.ico?v=2" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
+      </head>
       <body className="min-h-full flex flex-col font-sans">
         <ThemeProvider
           attribute="class"
