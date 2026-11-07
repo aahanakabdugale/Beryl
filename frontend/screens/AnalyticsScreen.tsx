@@ -44,7 +44,7 @@ export default function AnalyticsPage() {
         const data = await resMandates.json();
         const active = data.mandates?.[0];
         if (active) {
-          setSpentCents(typeof active.spent_cents === "number" ? active.spent_cents : 499);
+          setSpentCents(typeof active.spent_cents === "number" ? active.spent_cents : 0);
           setTotalBudgetCents(active.total_budget_cents || 15000);
         }
       }
