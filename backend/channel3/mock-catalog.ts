@@ -13,8 +13,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 1899, // $18.99
     currency: "USD",
     url: "https://bestbuy.com/p/adjustable-aluminum-phone-stand",
-    image_url:
-      "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/phone-stand.svg",
     in_stock: true,
     source: "mock",
   },
@@ -30,8 +29,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 2499, // $24.99
     currency: "USD",
     url: "https://bestbuy.com/p/logitech-m510-mouse",
-    image_url:
-      "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/wireless-mouse.svg",
     in_stock: true,
     source: "mock",
   },
@@ -47,8 +45,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 4250, // $42.50
     currency: "USD",
     url: "https://amazon.com/dp/B07X26262",
-    image_url:
-      "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/monitor-arm.svg",
     in_stock: true,
     source: "mock",
   },
@@ -64,8 +61,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 1650, // $16.50
     currency: "USD",
     url: "https://target.com/p/moleskine-dotted-notebook",
-    image_url:
-      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/grid-notebook.svg",
     in_stock: true,
     source: "mock",
   },
@@ -81,8 +77,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 3499, // $34.99
     currency: "USD",
     url: "https://amazon.com/dp/B0871Z45Z",
-    image_url:
-      "https://images.unsplash.com/photo-1541689592655-f5f52825a3b8?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/usbc-hub.svg",
     in_stock: true,
     source: "mock",
   },
@@ -98,8 +93,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 8900, // $89.00
     currency: "USD",
     url: "https://fashiondirect.com/p/leather-jacket",
-    image_url:
-      "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/leather-jacket.svg",
     in_stock: true,
     source: "mock",
   },
@@ -114,8 +108,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 6999, // $69.99
     currency: "USD",
     url: "https://amazon.com/dp/B07Y97835",
-    image_url:
-      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/gaming-keyboard.svg",
     in_stock: false, // Out of stock test
     source: "mock",
   },
@@ -130,8 +123,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 2199, // $21.99
     currency: "USD",
     url: "https://bestbuy.com/p/redragon-k552-keyboard",
-    image_url:
-      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/gaming-keyboard.svg",
     in_stock: true,
     source: "mock",
   },
@@ -146,8 +138,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 4500, // $45.00
     currency: "USD",
     url: "https://amazon.com/dp/B0871KEY00",
-    image_url:
-      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/ergonomic-keyboard.svg",
     in_stock: true,
     source: "mock",
   },
@@ -162,8 +153,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 1299, // $12.99
     currency: "USD",
     url: "https://amazon.com/dp/B08ANKERCBL",
-    image_url:
-      "https://images.unsplash.com/photo-1544652478-6653e09f18a2?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/usbc-cable.svg",
     in_stock: true,
     source: "mock",
   },
@@ -178,8 +168,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 899, // $8.99
     currency: "USD",
     url: "https://bestbuy.com/p/20w-fast-charger",
-    image_url:
-      "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/wall-charger.svg",
     in_stock: true,
     source: "mock",
   },
@@ -194,14 +183,13 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 650, // $6.50
     currency: "USD",
     url: "https://target.com/p/grid-notebook-pack",
-    image_url:
-      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/grid-notebook.svg",
     in_stock: true,
     source: "mock",
   },
   {
     id: "mock_cable_ties_14",
-    title: "Silicone Reusable Magnetic Cable Ties (12-Pack)",
+    title: "Reusable Silicone Magnetic Cable Ties (12-Pack)",
     description: "Colorful magnetic silicone cord organizers for keeping desk and charger cables tidy.",
     category: "electronics",
     category_path: ["electronics", "accessories", "cable-management"],
@@ -210,8 +198,22 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 499, // $4.99
     currency: "USD",
     url: "https://amazon.com/dp/B08CABLETIES",
-    image_url:
-      "https://images.unsplash.com/photo-1541689592655-f5f52825a3b8?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/cable-ties.svg",
+    in_stock: true,
+    source: "mock",
+  },
+  {
+    id: "mock_fineliner_15",
+    title: "BIC Intensity Fineliner Pens",
+    description: "Assorted vibrant colored writing pens with durable felt fine tips for clean note-taking and sketching.",
+    category: "office supplies",
+    category_path: ["office supplies", "stationery", "pens"],
+    merchant: "Walmart",
+    merchant_domain: "walmart.com",
+    price_cents: 799, // $7.99
+    currency: "USD",
+    url: "https://walmart.com/ip/bic-intensity-fineliner-pens",
+    image_url: "/products/fineliner-pens.svg",
     in_stock: true,
     source: "mock",
   },
@@ -228,8 +230,7 @@ export const MOCK_CATALOG: NormalizedProduct[] = [
     price_cents: 999, // $9.99
     currency: "USD",
     url: "/catalog/malicious",
-    image_url:
-      "https://images.unsplash.com/photo-1544652478-6653e09f18a2?w=500&auto=format&fit=crop&q=60",
+    image_url: "/products/gift-card.svg",
     in_stock: true,
     source: "mock",
     untrusted_metadata:
