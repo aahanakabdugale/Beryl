@@ -166,7 +166,7 @@ export default function AuthPage() {
         {/* ========================================================= */}
         {/* LEFT COLUMN: Light surface with 48px grid                */}
         {/* ========================================================= */}
-        <section className="relative flex flex-col justify-between p-6 sm:p-10 lg:p-12 overflow-y-auto bg-[#f3f8f5] bg-grid-auth-light text-[#0d2018] h-full">
+        <section className="relative flex flex-col justify-between p-6 sm:p-8 lg:px-12 lg:py-8 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden bg-[#f3f8f5] bg-grid-auth-light text-[#0d2018] h-full border-r border-[#0B7A5A]/10">
           {/* Top Bar inside Left Column */}
           <div className="flex items-center justify-between w-full">
             {/* Logo Lockup: Vault gem icon + BERYL wordmark */}
@@ -193,7 +193,7 @@ export default function AuthPage() {
           </div>
 
           {/* Form Block: Centered vertically, max-width 400px */}
-          <div className="w-full max-w-[400px] mx-auto my-auto py-8 sm:py-10">
+          <div className="w-full max-w-[400px] mx-auto my-auto py-4 sm:py-6">
             {/* Heading & Sub-line */}
             <div className="space-y-2">
               <h1 className="font-space text-[34px] sm:text-[38px] font-bold tracking-[-0.02em] leading-tight text-[#0d2018]">
@@ -434,7 +434,13 @@ export default function AuthPage() {
         {/* ========================================================= */}
         {/* RIGHT COLUMN: Dark Decorative Showcase (Hidden < 1024px) */}
         {/* ========================================================= */}
-        <section className="hidden lg:flex relative flex-col justify-between p-8 lg:p-12 overflow-hidden bg-[#04130e] bg-grid-auth-dark text-[#eaf7f0] select-none h-full">
+        <section className="hidden lg:flex relative flex-col justify-between p-8 lg:p-12 overflow-hidden bg-[#04130e] bg-grid-auth-dark text-[#eaf7f0] select-none h-full border-l border-[#0B7A5A]/20">
+          {/* Seamless Edge Transition Glow between Light and Dark */}
+          <div
+            className="absolute inset-y-0 left-0 w-14 pointer-events-none bg-gradient-to-r from-emerald-500/10 via-emerald-500/3 to-transparent z-10"
+            aria-hidden="true"
+          />
+
           {/* Radial Emerald Glow Aura behind Gem */}
           <div
             className="absolute pointer-events-none rounded-full blur-3xl opacity-80 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
