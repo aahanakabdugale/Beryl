@@ -191,10 +191,11 @@ export default function ConsumerApprovalsScreen() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          mandate_id: activeMandate?.id,
           item: randomName,
           category: randomName.includes("bamboo") ? "office supplies" : "electronics",
           merchant_domain: "bestbuy.com",
-          amount_cents: randomAmount,
+          amount_cents: 4500,
           agent_reason: `Discovered by AI shopper for workspace setup. Verified seller and catalog price match. Exceeds auto-approval threshold.`,
         }),
       });
