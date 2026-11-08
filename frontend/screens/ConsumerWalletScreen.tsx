@@ -5,17 +5,20 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ConsumerShell } from "@/frontend/components/ConsumerShell";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/browser";
 
 interface Mandate {
   id: string;
+  user_id?: string;
   name: string;
-  currency: string;
+  currency?: string;
   total_budget_cents: number;
   spent_cents?: number;
   per_purchase_limit_cents: number;
   ask_above_cents?: number;
   approval_threshold_cents?: number;
   is_frozen: boolean;
+  status?: string;
   expires_at: string;
   allowed_categories: string[];
   allowed_merchants: string[];
@@ -50,21 +53,6 @@ export default function ConsumerWalletScreen() {
   const [recentLogs, setRecentLogs] = useState<AuditLog[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Load from local cache immediately on mount to prevent any delay/flash
-  useEffect(() => {
-    try {
-      const cachedMandate = localStorage.getItem("beryl_active_mandate_cache");
-      if (cachedMandate) {
-        const parsed = JSON.parse(cachedMandate);
-        if (parsed && parsed.name) {
-          setActiveMandate(parsed);
-          setLoading(false);
-        }
-      }
-    } catch {}
-    fetchWalletData();
-  }, []);
 
   const fetchWalletData = async () => {
     try {
@@ -104,11 +92,41 @@ export default function ConsumerWalletScreen() {
     }
   };
 
+  // Load from local cache immediately on mount to prevent any delay/flash.
+  // Validates that the cache belongs to the current user to prevent stale data on account switch.
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      const currentUserId = data?.user?.id;
+      try {
+        const cachedRaw = localStorage.getItem("beryl_active_mandate_cache");
+        if (cachedRaw) {
+          const parsed = JSON.parse(cachedRaw);
+          // Only use cache if it belongs to the current user
+          if (parsed && parsed.name && parsed.user_id && parsed.user_id === currentUserId) {
+            setActiveMandate(parsed);
+            setLoading(false);
+          } else {
+            // Stale cache from a different account — clear it immediately
+            localStorage.removeItem("beryl_active_mandate_cache");
+          }
+        }
+      } catch {}
+      fetchWalletData();
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const totalBudgetCents = activeMandate?.total_budget_cents ?? 0;
   const spentCents = activeMandate?.spent_cents ?? 0;
   const remainingCents = Math.max(0, totalBudgetCents - spentCents);
   const perPurchaseLimitCents = activeMandate?.per_purchase_limit_cents ?? 0;
-  const askAboveCents = activeMandate?.ask_above_cents || activeMandate?.approval_threshold_cents || 0;
+  const askAboveCents =
+    activeMandate?.approval_threshold_cents ??
+    activeMandate?.ask_above_cents ??
+    0;
+
+  const isFrozen = Boolean(activeMandate?.is_frozen) || activeMandate?.status === "frozen";
 
   const spentPercent = totalBudgetCents > 0
     ? Math.min(100, Math.round((spentCents / totalBudgetCents) * 100))
@@ -119,7 +137,7 @@ export default function ConsumerWalletScreen() {
         month: "long",
         day: "numeric",
       })
-    : "November 30";
+    : "30 Days";
 
   const categoriesText =
     activeMandate?.allowed_categories && activeMandate.allowed_categories.length > 0
@@ -139,39 +157,44 @@ export default function ConsumerWalletScreen() {
       title="My shopping wallet"
       description="Your agent can only spend what you've allowed here."
     >
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="space-y-6"
-      >
-        {/* 1. Allowance Card */}
-        <div className="rounded-3xl border border-[var(--approvals-line)] bg-[var(--approvals-card)] p-8 shadow-[0_8px_30px_-14px_rgba(11,70,48,0.16)] dark:shadow-none space-y-7">
-          <div className="space-y-1">
-            <div className="text-[14px] text-[var(--approvals-mute)] font-normal">
-              Money left to spend
+      {loading && !activeMandate ? (
+        <div className="rounded-3xl border border-[var(--approvals-line)] bg-[var(--approvals-card)] p-12 text-center text-sm text-[var(--approvals-mute)] animate-pulse">
+          Loading your shopping wallet...
+        </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-6"
+        >
+          {/* 1. Allowance Card */}
+          <div className="rounded-3xl border border-[var(--approvals-line)] bg-[var(--approvals-card)] p-8 shadow-[0_8px_30px_-14px_rgba(11,70,48,0.16)] dark:shadow-none space-y-7">
+            <div className="space-y-1">
+              <div className="text-[14px] text-[var(--approvals-mute)] font-normal">
+                Money left to spend
+              </div>
+              <div className="text-[48px] sm:text-[64px] font-medium tracking-[-0.04em] text-[var(--approvals-brand)] dark:text-[var(--approvals-accent)] leading-none pt-1">
+                ${(remainingCents / 100).toFixed(2)}
+              </div>
+              <div className="text-[14px] text-[var(--approvals-mute)] pt-2">
+                out of ${(totalBudgetCents / 100).toFixed(2)} · {activeMandate?.name || "Shopping Allowance"}
+              </div>
             </div>
-            <div className="text-[48px] sm:text-[64px] font-medium tracking-[-0.04em] text-[var(--approvals-brand)] dark:text-[var(--approvals-accent)] leading-none pt-1">
-              ${(remainingCents / 100).toFixed(2)}
-            </div>
-            <div className="text-[14px] text-[var(--approvals-mute)] pt-2">
-              out of ${(totalBudgetCents / 100).toFixed(2)} · {activeMandate?.name || "Desk & Electronics Setup"}
-            </div>
-          </div>
 
-          {/* Progress bar */}
-          <div className="space-y-2.5">
-            <div className="h-2.5 w-full rounded-full bg-[var(--approvals-soft)] overflow-hidden">
-              <div
-                className="h-full rounded-full bg-[var(--approvals-brand)] dark:bg-[var(--approvals-accent)] transition-all duration-500"
-                style={{ width: `${Math.max(8, spentPercent)}%` }}
-              />
+            {/* Progress bar */}
+            <div className="space-y-2.5">
+              <div className="h-2.5 w-full rounded-full bg-[var(--approvals-soft)] overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-[var(--approvals-brand)] dark:bg-[var(--approvals-accent)] transition-all duration-500"
+                  style={{ width: `${Math.max(8, spentPercent)}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[14px] text-[var(--approvals-mute)]">
+                <span>${(spentCents / 100).toFixed(2)} spent</span>
+                <span>{isFrozen ? "Shopping paused" : "Shopping is on"}</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between text-[14px] text-[var(--approvals-mute)]">
-              <span>${(spentCents / 100).toFixed(2)} spent</span>
-              <span>{activeMandate?.is_frozen ? "Shopping paused" : "Shopping is on"}</span>
-            </div>
-          </div>
 
           {/* Facts grid: 2 columns */}
           <div className="grid grid-cols-2 gap-x-8 gap-y-5 border-t border-[var(--approvals-line)] pt-7 mt-8">
@@ -316,6 +339,7 @@ export default function ConsumerWalletScreen() {
           </div>
         </div>
       </motion.div>
+      )}
     </ConsumerShell>
   );
 }
