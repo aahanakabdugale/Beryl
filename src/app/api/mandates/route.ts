@@ -87,25 +87,6 @@ export async function GET(request: NextRequest) {
     let spentMap: Record<string, number> = {};
 
     if (mandateIds.length > 0) {
-      const activeMandateId = mandateIds[0];
-
-      // Re-link any order matching the desktop phone stand or recent chat orders to the user's active mandate
-      try {
-        await supabase
-          .from("payment_requests")
-          .update({ mandate_id: activeMandateId })
-          .ilike("item", "%Phone Stand%")
-          .neq("mandate_id", activeMandateId);
-
-        // Also update corresponding decisions
-        await supabase
-          .from("decisions")
-          .update({ mandate_id: activeMandateId, user_id: user.id })
-          .eq("mandate_id", activeMandateId);
-      } catch (linkErr) {
-        console.warn("Could not re-link payment request:", linkErr);
-      }
-
       // Query requests with relational joins
       const { data: requests } = await supabase
         .from("payment_requests")
@@ -113,6 +94,7 @@ export async function GET(request: NextRequest) {
           id,
           mandate_id,
           amount_cents,
+          created_at,
           decisions (outcome),
           approvals (status),
           payments (paypal_status)
@@ -122,6 +104,23 @@ export async function GET(request: NextRequest) {
       const reqList: any[] = (requests as any[]) || [];
       if (reqList.length > 0) {
         for (const req of reqList) {
+          const parentMandate = (mandates || []).find((m) => m.id === req.mandate_id);
+          // If the order was created before this mandate existed (leaked from a previous account), ignore it
+          if (
+            parentMandate &&
+            req.created_at &&
+            parentMandate.created_at &&
+            new Date(req.created_at).getTime() < new Date(parentMandate.created_at).getTime() - 60000
+          ) {
+            // Unlink from this fresh mandate back to demo
+            supabase
+              .from("payment_requests")
+              .update({ mandate_id: "00000000-0000-0000-0000-000000000001" })
+              .eq("id", req.id)
+              .then(() => {});
+            continue;
+          }
+
           const decList = Array.isArray(req.decisions)
             ? req.decisions
             : req.decisions
