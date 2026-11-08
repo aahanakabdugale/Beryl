@@ -53,7 +53,7 @@ export async function POST(
     const supabase = createAdminClient();
 
     // 1. Fetch existing approval with associated payment request & mandate
-    const { data: approval, error: fetchError } = await supabase
+    let { data: approval, error: fetchError } = await supabase
       .from("approvals")
       .select(
         `
@@ -77,9 +77,70 @@ export async function POST(
       `
       )
       .eq("id", approvalId)
-      .single();
+      .maybeSingle();
 
-    if (fetchError || !approval) {
+    if (!approval) {
+      // Check if approvalId is a request_id in approvals
+      const { data: byReq } = await supabase
+        .from("approvals")
+        .select(
+          `
+          id,
+          request_id,
+          status,
+          decided_at,
+          payment_requests (
+            id,
+            mandate_id,
+            item,
+            amount_cents,
+            merchant,
+            merchant_domain,
+            mandates (
+              id,
+              user_id,
+              name
+            )
+          )
+        `
+        )
+        .eq("request_id", approvalId)
+        .maybeSingle();
+      approval = byReq;
+    }
+
+    if (!approval) {
+      // Check if approvalId matches a payment request that needs approval
+      const { data: pr } = await supabase
+        .from("payment_requests")
+        .select(`
+          id,
+          mandate_id,
+          item,
+          amount_cents,
+          merchant,
+          merchant_domain,
+          mandates (
+            id,
+            user_id,
+            name
+          )
+        `)
+        .eq("id", approvalId)
+        .maybeSingle();
+
+      if (pr) {
+        approval = {
+          id: approvalId,
+          request_id: pr.id,
+          status: "pending",
+          decided_at: null,
+          payment_requests: pr,
+        };
+      }
+    }
+
+    if (!approval) {
       return NextResponse.json(
         { error: "Approval record not found" },
         { status: 404 }
