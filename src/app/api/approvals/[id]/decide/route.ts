@@ -53,7 +53,8 @@ export async function POST(
     const supabase = createAdminClient();
 
     // 1. Fetch existing approval with associated payment request & mandate
-    let { data: approval, error: fetchError } = await supabase
+    let approval: any = null;
+    const { data: initialApproval } = await supabase
       .from("approvals")
       .select(
         `
@@ -78,6 +79,8 @@ export async function POST(
       )
       .eq("id", approvalId)
       .maybeSingle();
+
+    approval = initialApproval;
 
     if (!approval) {
       // Check if approvalId is a request_id in approvals
