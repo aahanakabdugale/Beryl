@@ -183,8 +183,6 @@ export async function POST(request: NextRequest) {
           await supabase.from("approvals").upsert({
             id: approvalId,
             request_id: requestId,
-            mandate_id: mandate.id,
-            user_id: user?.id,
             status: "pending",
             decided_at: null,
           });
