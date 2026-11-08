@@ -77,6 +77,8 @@ export const CreateMandateSchema = MandateSchema.omit({
   created_at: true,
 }).extend({
   status: MandateStatusSchema.default("active"),
+  // Accept ask_above_cents as an alias — API route maps it to the DB column
+  ask_above_cents: z.number().int().nonnegative().optional(),
 });
 
 export type CreateMandateInput = z.infer<typeof CreateMandateSchema>;
