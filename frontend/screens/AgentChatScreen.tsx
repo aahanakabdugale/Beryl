@@ -16,6 +16,9 @@ import {
   formatAddressLines,
 } from "@/lib/addresses";
 import { AddressModal } from "@/frontend/components/address-modal";
+import { ChatHistoryModal, ChatSession } from "@/frontend/components/chat-history-modal";
+import { createClient } from "@/lib/supabase/browser";
+import { RotateCcw, Clock, Plus, History } from "lucide-react";
 
 interface Message {
   id: string;
@@ -317,6 +320,11 @@ export default function AgentChatPage() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string>("guest");
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string>("");
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [hasLoadedStoredMessages, setHasLoadedStoredMessages] = useState(false);
   const [activeTimeline, setActiveTimeline] = useState<any[]>([]);
   const [lastPaymentResult, setLastPaymentResult] = useState<any>(null);
   const [addressBook, setAddressBook] = useState<AddressBook>(getSavedAddresses());
@@ -324,7 +332,60 @@ export default function AgentChatPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // Sync initial message whenever role mode changes
+  // Load chat sessions from localStorage scoped to user ID
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data?.user?.id || "guest";
+      setUserId(uid);
+      try {
+        const storedSessionsRaw = localStorage.getItem(`beryl_chat_sessions_${uid}`);
+        let loadedSessions: ChatSession[] = [];
+        if (storedSessionsRaw) {
+          loadedSessions = JSON.parse(storedSessionsRaw);
+        }
+
+        // Migration: check if legacy single-chat history exists and migrate it into a session
+        const legacyStored = localStorage.getItem(`beryl_chat_history_${uid}`);
+        if (legacyStored && loadedSessions.length === 0) {
+          try {
+            const legacyMsgs = JSON.parse(legacyStored);
+            if (Array.isArray(legacyMsgs) && legacyMsgs.length > 1) {
+              const firstUser = legacyMsgs.find((m: any) => m.sender === "user");
+              const legacySession: ChatSession = {
+                id: Date.now().toString(),
+                title: firstUser?.text ? (firstUser.text.length > 36 ? firstUser.text.slice(0, 36) + "..." : firstUser.text) : "Shopping Chat",
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                messages: legacyMsgs,
+              };
+              loadedSessions = [legacySession];
+              localStorage.setItem(`beryl_chat_sessions_${uid}`, JSON.stringify(loadedSessions));
+            }
+          } catch {}
+        }
+
+        setSessions(loadedSessions);
+
+        const activeId = localStorage.getItem(`beryl_active_session_id_${uid}`);
+        const found = loadedSessions.find((s) => s.id === activeId) || loadedSessions[0];
+
+        if (found && Array.isArray(found.messages) && found.messages.length > 0) {
+          setCurrentSessionId(found.id);
+          setMessages(found.messages);
+        } else {
+          const newId = Date.now().toString();
+          setCurrentSessionId(newId);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setHasLoadedStoredMessages(true);
+      }
+    });
+  }, []);
+
+  // Sync initial message whenever role mode changes (only if no existing messages)
   useEffect(() => {
     setMessages((prev) => {
       if (prev.length === 1 && prev[0].id === "initial") {
@@ -371,7 +432,7 @@ export default function AgentChatPage() {
     if (messages.length > 1) {
       scrollToBottom();
     }
-  }, [messages.length, activeTimeline.length]);
+  }, [messages.length, activeTimeline.length, hasLoadedStoredMessages]);
 
   const handleSendMessage = async (promptText?: string) => {
     const textToSend = promptText || input;
@@ -384,9 +445,44 @@ export default function AgentChatPage() {
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInput("");
     setLoading(true);
+
+    let targetSessionId = currentSessionId;
+    if (!targetSessionId) {
+      targetSessionId = Date.now().toString();
+      setCurrentSessionId(targetSessionId);
+    }
+
+    // Persist user message to sessions immediately
+    setSessions((prev) => {
+      const existing = prev.find((s) => s.id === targetSessionId);
+      const title = textToSend.length > 36 ? textToSend.slice(0, 36) + "..." : textToSend;
+      let updated: ChatSession[];
+      if (existing) {
+        updated = prev.map((s) =>
+          s.id === targetSessionId
+            ? { ...s, updatedAt: new Date().toISOString(), messages: newMessages }
+            : s
+        );
+      } else {
+        const newSession: ChatSession = {
+          id: targetSessionId,
+          title,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          messages: newMessages,
+        };
+        updated = [newSession, ...prev];
+      }
+      try {
+        localStorage.setItem(`beryl_chat_sessions_${userId}`, JSON.stringify(updated));
+        localStorage.setItem(`beryl_active_session_id_${userId}`, targetSessionId);
+      } catch {}
+      return updated;
+    });
 
     try {
       const res = await fetch("/api/agent/chat", {
@@ -395,6 +491,7 @@ export default function AgentChatPage() {
         body: JSON.stringify({
           message: textToSend,
           mandateId: activeMandate?.id,
+          sessionId: targetSessionId,
         }),
       });
 
@@ -459,24 +556,51 @@ export default function AgentChatPage() {
         } : undefined,
       };
 
-      setMessages((prev) => [...prev, agentMessage]);
+      const finalMessages = [...newMessages, agentMessage];
+      setMessages(finalMessages);
+
+      // Persist agent response to sessions
+      setSessions((prev) => {
+        const updated = prev.map((s) =>
+          s.id === targetSessionId
+            ? { ...s, updatedAt: new Date().toISOString(), messages: finalMessages }
+            : s
+        );
+        try {
+          localStorage.setItem(`beryl_chat_sessions_${userId}`, JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
     } catch (err: any) {
       toast.error(err.message || "Failed to communicate with shopping agent");
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: "agent",
-          text: err.message || "Connection failure. Please retry your request.",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: "agent",
+        text: err.message || "Connection failure. Please retry your request.",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      const finalMessages = [...newMessages, errorMessage];
+      setMessages(finalMessages);
+
+      setSessions((prev) => {
+        const updated = prev.map((s) =>
+          s.id === targetSessionId
+            ? { ...s, updatedAt: new Date().toISOString(), messages: finalMessages }
+            : s
+        );
+        try {
+          localStorage.setItem(`beryl_chat_sessions_${userId}`, JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClear = () => {
+  const handleNewChat = () => {
+    const newId = Date.now().toString();
+    setCurrentSessionId(newId);
     setMessages([
       {
         id: "initial",
@@ -487,6 +611,51 @@ export default function AgentChatPage() {
     ]);
     setActiveTimeline([]);
     setLastPaymentResult(null);
+    try {
+      localStorage.setItem(`beryl_active_session_id_${userId}`, newId);
+    } catch {}
+    toast.success("Started a new chat! Previous chats are saved in History.");
+  };
+
+  const handleSelectSession = (session: ChatSession) => {
+    setCurrentSessionId(session.id);
+    setMessages(session.messages);
+    setActiveTimeline([]);
+    setLastPaymentResult(null);
+    try {
+      localStorage.setItem(`beryl_active_session_id_${userId}`, session.id);
+    } catch {}
+    toast.success(`Loaded "${session.title}"`);
+  };
+
+  const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = sessions.filter((s) => s.id !== sessionId);
+    setSessions(updated);
+    try {
+      localStorage.setItem(`beryl_chat_sessions_${userId}`, JSON.stringify(updated));
+    } catch {}
+
+    if (currentSessionId === sessionId) {
+      if (updated.length > 0) {
+        handleSelectSession(updated[0]);
+      } else {
+        handleNewChat();
+      }
+    }
+    toast.success("Conversation deleted.");
+  };
+
+  const handleClearAllSessions = () => {
+    setSessions([]);
+    try {
+      localStorage.removeItem(`beryl_chat_sessions_${userId}`);
+      localStorage.removeItem(`beryl_active_session_id_${userId}`);
+      localStorage.removeItem(`beryl_chat_history_${userId}`);
+    } catch {}
+    handleNewChat();
+    setIsHistoryModalOpen(false);
+    toast.success("All chat history cleared.");
   };
 
   const totalBudgetCents = activeMandate?.total_budget_cents ?? 10000;
@@ -506,6 +675,34 @@ export default function AgentChatPage() {
         title="Shop with Beryl"
         compactPadding={true}
         maxWidth="max-w-[1040px]"
+        headerActions={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsHistoryModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-zinc-200 dark:border-[#1E3B2F] bg-white dark:bg-[#0D1C17] text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:border-[#0B7A5A] transition-colors cursor-pointer shadow-2xs"
+              title="View your previous shopping conversations"
+            >
+              <History className="w-3.5 h-3.5 text-zinc-500" />
+              <span>Past Chats</span>
+              {sessions.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-[#0B7A5A]/10 text-[#0B7A5A] dark:bg-[#0B7A5A]/25 dark:text-[#3EE0A8]">
+                  {sessions.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNewChat}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-full bg-[#0B7A5A] hover:bg-[#086147] text-white transition-colors cursor-pointer shadow-2xs"
+              title="Start a new shopping conversation"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Chat</span>
+            </button>
+          </div>
+        }
       >
         <div className="space-y-4">
           {/* Institutional Allowance Bar */}
@@ -783,6 +980,18 @@ export default function AgentChatPage() {
           </div>
         </div>
 
+        {/* Chat History Modal */}
+        <ChatHistoryModal
+          isOpen={isHistoryModalOpen}
+          onClose={() => setIsHistoryModalOpen(false)}
+          sessions={sessions}
+          currentSessionId={currentSessionId}
+          onSelectSession={handleSelectSession}
+          onNewChat={handleNewChat}
+          onDeleteSession={handleDeleteSession}
+          onClearAllSessions={handleClearAllSessions}
+        />
+
         {/* 1-Time / Customer Address Management Modal */}
         <AddressModal
           isOpen={isAddressModalOpen}
@@ -825,13 +1034,26 @@ export default function AgentChatPage() {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleClear}
-          className="text-xs font-mono px-3 py-1 border border-zinc-200 dark:border-[#162E25] bg-white dark:bg-[#0D1C17] text-zinc-700 dark:text-zinc-300 rounded hover:bg-zinc-50 dark:hover:bg-[#12241E] cursor-pointer transition-colors"
-        >
-          Clear Session
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsHistoryModalOpen(true)}
+            className="text-xs font-mono px-3 py-1 border border-zinc-200 dark:border-[#162E25] bg-white dark:bg-[#0D1C17] text-zinc-700 dark:text-zinc-300 rounded hover:bg-zinc-50 dark:hover:bg-[#12241E] cursor-pointer transition-colors inline-flex items-center gap-1.5"
+            title="View past sessions"
+          >
+            <History className="w-3.5 h-3.5 text-zinc-400" />
+            <span>Past Sessions ({sessions.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleNewChat}
+            className="text-xs font-mono px-3 py-1 bg-[#0B7A5A] hover:bg-[#086147] text-white rounded cursor-pointer transition-colors inline-flex items-center gap-1"
+            title="Start new shopping session"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Session</span>
+          </button>
+        </div>
       </div>
 
       {/* Split Console Grid */}
@@ -1110,6 +1332,18 @@ export default function AgentChatPage() {
           </div>
         </div>
       </div>
+
+      {/* Chat History Modal (Developer View) */}
+      <ChatHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        sessions={sessions}
+        currentSessionId={currentSessionId}
+        onSelectSession={handleSelectSession}
+        onNewChat={handleNewChat}
+        onDeleteSession={handleDeleteSession}
+        onClearAllSessions={handleClearAllSessions}
+      />
     </div>
   );
 }
