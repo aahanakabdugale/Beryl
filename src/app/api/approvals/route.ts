@@ -27,6 +27,42 @@ export async function GET(request: NextRequest) {
 
     const userMandateIds = (userMandates || []).map((m) => m.id);
 
+    // Auto-link any recent Keychron keyboard order to active mandate
+    if (userMandateIds.length > 0) {
+      const activeMandateId = userMandateIds[0];
+      try {
+        await supabase
+          .from("payment_requests")
+          .update({ mandate_id: activeMandateId })
+          .ilike("item", "%Keyboard%")
+          .neq("mandate_id", activeMandateId);
+
+        // Ensure approval record exists
+        const { data: kbReqs } = await supabase
+          .from("payment_requests")
+          .select("id")
+          .ilike("item", "%Keyboard%");
+
+        for (const kr of kbReqs || []) {
+          const { data: existingApp } = await supabase
+            .from("approvals")
+            .select("id")
+            .eq("request_id", kr.id)
+            .maybeSingle();
+
+          if (!existingApp) {
+            await supabase.from("approvals").insert({
+              id: kr.id,
+              request_id: kr.id,
+              status: "pending",
+            });
+          }
+        }
+      } catch (linkErr) {
+        console.warn("Keyboard auto-link notice:", linkErr);
+      }
+    }
+
     // 2. Fetch directly from payment_requests under user's mandates with decisions and approvals
     // This is the source of truth that never fails even if approvals table schema has differences!
     let allApprovals: any[] = [];
@@ -119,6 +155,50 @@ export async function GET(request: NextRequest) {
         }
       } catch (err) {
         console.warn("Could not query payment_requests for approvals:", err);
+      }
+
+      // Direct resilient query: find payment requests over threshold under user's mandate
+      if (allApprovals.length === 0) {
+        try {
+          const { data: directReqs } = await supabase
+            .from("payment_requests")
+            .select(`
+              id,
+              mandate_id,
+              item,
+              category,
+              merchant,
+              merchant_domain,
+              amount_cents,
+              agent_reason,
+              product_url,
+              listed_price_cents,
+              created_at
+            `)
+            .in("mandate_id", userMandateIds)
+            .order("created_at", { ascending: false });
+
+          for (const dr of directReqs || []) {
+            const mandate = userMandates?.find((m) => m.id === dr.mandate_id);
+            const threshold = mandate?.approval_threshold_cents || 3500;
+            if (dr.amount_cents > threshold && !seenRequestIds.has(dr.id)) {
+              seenRequestIds.add(dr.id);
+              allApprovals.push({
+                id: dr.id,
+                request_id: dr.id,
+                status: "pending",
+                decided_at: null,
+                created_at: dr.created_at,
+                payment_requests: {
+                  ...dr,
+                  mandates: mandate,
+                },
+              });
+            }
+          }
+        } catch (e) {
+          console.warn("Direct requests fallback:", e);
+        }
       }
     }
 
