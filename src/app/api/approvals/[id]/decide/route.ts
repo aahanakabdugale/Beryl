@@ -87,7 +87,7 @@ export async function POST(
     }
 
     // 2. Prevent re-deciding completed approvals
-    if (approval.status !== "pending") {
+    if ((approval.status || "").toLowerCase() !== "pending") {
       return NextResponse.json(
         {
           error: `This request has already been ${approval.status} at ${approval.decided_at}.`,
@@ -97,19 +97,32 @@ export async function POST(
     }
 
     // 3. User verification (relaxed for Developer Lab test mandates)
-    const paymentReq: any = approval.payment_requests;
+    const paymentReq: any = Array.isArray(approval.payment_requests)
+      ? approval.payment_requests[0]
+      : approval.payment_requests;
     const mandateOwner = paymentReq?.mandates?.user_id;
 
     const decidedAt = new Date().toISOString();
 
     // 4. Update the Approval Record
-    const { error: updateError } = await supabase
+    let { error: updateError } = await supabase
       .from("approvals")
       .update({
         status: decision,
         decided_at: decidedAt,
       })
       .eq("id", approvalId);
+
+    if (updateError) {
+      const res = await supabase
+        .from("approvals")
+        .update({
+          status: decision.toUpperCase(),
+          decided_at: decidedAt,
+        })
+        .eq("id", approvalId);
+      updateError = res.error;
+    }
 
     if (updateError) {
       return NextResponse.json(
