@@ -75,6 +75,8 @@ export default function AuthPage() {
         setFormError(error.message);
         toast.error(error.message);
       } else {
+        // Clear any cached mandate data from a previous account session
+        try { localStorage.removeItem("beryl_active_mandate_cache"); } catch {}
         toast.success("Welcome back to BERYL!");
         router.push("/dashboard");
         router.refresh();
@@ -110,7 +112,13 @@ export default function AuthPage() {
         setFormError(error.message);
         toast.error(error.message);
       } else {
-        toast.success("Account created! Check your email or use Instant Demo.");
+        toast.success("Account created! Please sign in with your new credentials.");
+        // Pre-fill email and switch to Sign In tab so the user just enters their password
+        setPassword("");
+        setPasswordTouched(false);
+        setEmailTouched(false);
+        setFormError(null);
+        setAuthMode("signin");
       }
     } catch {
       const msg = "Failed to sign up. Please try again.";
