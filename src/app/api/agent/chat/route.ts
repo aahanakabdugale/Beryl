@@ -26,11 +26,11 @@ export async function POST(request: NextRequest) {
 
     let mandate = null;
     if (mandateId) {
-      const { data } = await supabase
-        .from("mandates")
-        .select("*")
-        .eq("id", mandateId)
-        .maybeSingle();
+      let mQuery = supabase.from("mandates").select("*").eq("id", mandateId);
+      if (user) {
+        mQuery = mQuery.eq("user_id", user.id);
+      }
+      const { data } = await mQuery.maybeSingle();
       mandate = data;
     }
 
@@ -39,18 +39,52 @@ export async function POST(request: NextRequest) {
         .from("mandates")
         .select("*")
         .eq("user_id", user.id)
-        .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       mandate = data;
     }
 
+    // Auto-provision a mandate for this user if they don't have one yet
+    if (!mandate && user) {
+      try {
+        await supabase.from("profiles").upsert(
+          {
+            id: user.id,
+            email: user.email || "",
+            created_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
+      } catch {}
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+      const defaultMandate = {
+        user_id: user.id,
+        name: "My Shopping Allowance",
+        total_budget_cents: 10000,
+        per_purchase_limit_cents: 5000,
+        approval_threshold_cents: 3500,
+        allowed_categories: ["electronics", "office supplies", "accessories", "books"],
+        allowed_merchants: ["amazon.com", "bestbuy.com", "target.com", "trychannel3.com"],
+        blocked_merchants: ["shadydeals.xyz", "giftcardhub.net"],
+        status: "active",
+        expires_at: expiresAt.toISOString(),
+        created_at: new Date().toISOString(),
+      };
+      const { data: created } = await supabase
+        .from("mandates")
+        .insert(defaultMandate)
+        .select()
+        .single();
+      if (created) mandate = created;
+    }
+
     if (!mandate) {
       const { data } = await supabase
         .from("mandates")
         .select("*")
-        .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -130,6 +164,8 @@ export async function POST(request: NextRequest) {
         await supabase.from("decisions").upsert({
           id: decisionId,
           request_id: requestId,
+          mandate_id: mandate.id,
+          user_id: user?.id,
           outcome: decision.outcome,
           rule_code: decision.rule_code,
           reason_text: decision.reason_text,
@@ -147,6 +183,8 @@ export async function POST(request: NextRequest) {
           await supabase.from("approvals").upsert({
             id: approvalId,
             request_id: requestId,
+            mandate_id: mandate.id,
+            user_id: user?.id,
             status: "pending",
             decided_at: null,
           });
