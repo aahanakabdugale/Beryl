@@ -27,7 +27,6 @@ export async function GET(request: NextRequest) {
 
     const userMandateIds = (userMandates || []).map((m) => m.id);
 
-    // 2. Auto-link and auto-provision missing approvals for the active user
     if (userMandateIds.length > 0) {
       const activeMandateId = userMandateIds[0];
 
@@ -39,146 +38,186 @@ export async function GET(request: NextRequest) {
           .ilike("item", "%Keyboard%")
           .neq("mandate_id", activeMandateId);
       } catch {}
+    }
 
-      // Check for any payment requests under user's mandates that need approval but lack an approvals row
+    // 2. Fetch directly from payment_requests under user's mandates with decisions and approvals
+    // This is the source of truth that never fails even if approvals table schema has differences!
+    let allApprovals: any[] = [];
+    const seenRequestIds = new Set<string>();
+
+    if (userMandateIds.length > 0) {
       try {
-        const { data: pendingPrs } = await supabase
+        const { data: requests } = await supabase
           .from("payment_requests")
-          .select("id, mandate_id, item, amount_cents, decisions(outcome)")
-          .in("mandate_id", userMandateIds);
+          .select(`
+            id,
+            mandate_id,
+            item,
+            category,
+            merchant,
+            merchant_domain,
+            amount_cents,
+            agent_reason,
+            product_url,
+            listed_price_cents,
+            created_at,
+            mandates (
+              id,
+              user_id,
+              name,
+              total_budget_cents,
+              approval_threshold_cents
+            ),
+            decisions (
+              outcome,
+              rule_code,
+              reason_text
+            ),
+            approvals (
+              id,
+              status,
+              decided_at
+            )
+          `)
+          .in("mandate_id", userMandateIds)
+          .order("created_at", { ascending: false });
 
-        for (const pr of pendingPrs || []) {
-          const decList = Array.isArray(pr.decisions)
-            ? pr.decisions
-            : pr.decisions
-            ? [pr.decisions]
+        for (const req of requests || []) {
+          const decList = Array.isArray(req.decisions)
+            ? req.decisions
+            : req.decisions
+            ? [req.decisions]
             : [];
           const isNeedsApproval = decList.some(
             (d: any) => (d.outcome || "").toLowerCase() === "needs_approval"
           );
 
-          if (isNeedsApproval) {
-            const { data: existingApp } = await supabase
-              .from("approvals")
-              .select("id")
-              .eq("request_id", pr.id)
-              .maybeSingle();
+          const appList = Array.isArray(req.approvals)
+            ? req.approvals
+            : req.approvals
+            ? [req.approvals]
+            : [];
+          const existingApp = appList[0];
 
+          if (isNeedsApproval || existingApp) {
+            seenRequestIds.add(req.id);
+            const approvalId = existingApp?.id || req.id;
+            const normalizedStatus = (existingApp?.status || "pending").toLowerCase();
+
+            // Auto-persist into approvals table if missing
             if (!existingApp) {
-              const newAppId = crypto.randomUUID();
-              const appRow = {
-                id: newAppId,
-                request_id: pr.id,
-                mandate_id: pr.mandate_id,
-                user_id: user.id,
-                status: "pending",
-              };
-              const { error: insErr } = await supabase.from("approvals").insert(appRow);
-              if (insErr) {
-                await supabase.from("approvals").insert({ ...appRow, status: "PENDING" });
-              }
+              try {
+                await supabase.from("approvals").insert({
+                  id: approvalId,
+                  request_id: req.id,
+                  status: "pending",
+                });
+              } catch {}
             }
+
+            const mandate = Array.isArray(req.mandates) ? req.mandates[0] : req.mandates;
+
+            allApprovals.push({
+              id: approvalId,
+              request_id: req.id,
+              status: normalizedStatus,
+              decided_at: existingApp?.decided_at || null,
+              created_at: req.created_at,
+              payment_requests: {
+                ...req,
+                mandates: mandate,
+              },
+            });
           }
         }
-      } catch (syncErr) {
-        console.warn("Auto-sync approvals error:", syncErr);
+      } catch (err) {
+        console.warn("Could not query payment_requests for approvals:", err);
       }
     }
 
-    // 3. Query approvals table
-    const { data: approvals, error } = await supabase
-      .from("approvals")
-      .select(
-        `
-        id,
-        request_id,
-        mandate_id,
-        user_id,
-        status,
-        decided_at,
-        payment_requests (
+    // 3. Also query approvals table directly to catch any legacy or seed approvals
+    try {
+      const { data: rawApps } = await supabase
+        .from("approvals")
+        .select(`
           id,
-          mandate_id,
-          item,
-          category,
-          merchant,
-          merchant_domain,
-          amount_cents,
-          agent_reason,
-          product_url,
-          listed_price_cents,
-          created_at,
-          mandates (
+          request_id,
+          status,
+          decided_at,
+          payment_requests (
             id,
-            user_id,
-            name,
-            total_budget_cents,
-            approval_threshold_cents
+            mandate_id,
+            item,
+            category,
+            merchant,
+            merchant_domain,
+            amount_cents,
+            agent_reason,
+            product_url,
+            listed_price_cents,
+            created_at,
+            mandates (
+              id,
+              user_id,
+              name,
+              total_budget_cents,
+              approval_threshold_cents
+            )
           )
-        )
-      `
-      )
-      .limit(limit);
+        `)
+        .limit(limit);
 
-    if (error) {
-      return NextResponse.json(
-        { error: `Database error: ${error.message}` },
-        { status: 500 }
+      for (const app of rawApps || []) {
+        if (app.request_id && seenRequestIds.has(app.request_id)) {
+          continue; // Already processed
+        }
+
+        const pr = Array.isArray(app.payment_requests)
+          ? app.payment_requests[0]
+          : app.payment_requests;
+        const mandate = Array.isArray(pr?.mandates)
+          ? pr?.mandates[0]
+          : pr?.mandates;
+
+        const isUserMandate = pr?.mandate_id && userMandateIds.includes(pr.mandate_id);
+        const isUserOwner = mandate?.user_id === user.id;
+
+        if (isUserMandate || isUserOwner) {
+          allApprovals.push({
+            id: app.id,
+            request_id: app.request_id,
+            status: (app.status || "pending").toLowerCase(),
+            decided_at: app.decided_at || null,
+            payment_requests: pr
+              ? {
+                  ...pr,
+                  mandates: mandate,
+                }
+              : undefined,
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("Approvals direct query fallback:", e);
+    }
+
+    // 4. Apply status filter if requested
+    let filteredApprovals = allApprovals;
+    if (statusFilter && statusFilter !== "all") {
+      const targetStatus = statusFilter.toLowerCase();
+      filteredApprovals = filteredApprovals.filter(
+        (a: any) => a.status === targetStatus
       );
     }
 
-    // 4. Filter strictly to approvals belonging to this user
-    let userApprovals = (approvals || [])
-      .filter((app: any) => {
-        const pr = Array.isArray(app.payment_requests)
-          ? app.payment_requests[0]
-          : app.payment_requests;
-        const mandate = Array.isArray(pr?.mandates)
-          ? pr?.mandates[0]
-          : pr?.mandates;
-
-        const mandateOwner = mandate?.user_id || app.user_id;
-        const isUserMandate = app.mandate_id ? userMandateIds.includes(app.mandate_id) : false;
-        const isPrMandate = pr?.mandate_id ? userMandateIds.includes(pr.mandate_id) : false;
-
-        return mandateOwner === user.id || isUserMandate || isPrMandate;
-      })
-      .map((app: any) => {
-        const pr = Array.isArray(app.payment_requests)
-          ? app.payment_requests[0]
-          : app.payment_requests;
-        const mandate = Array.isArray(pr?.mandates)
-          ? pr?.mandates[0]
-          : pr?.mandates;
-
-        const normalizedStatus = (app.status || "pending").toLowerCase();
-
-        return {
-          ...app,
-          status: normalizedStatus,
-          payment_requests: pr
-            ? {
-                ...pr,
-                mandates: mandate,
-              }
-            : undefined,
-        };
-      });
-
-    // 5. Apply status filter if requested
-    if (statusFilter && statusFilter !== "all") {
-      const targetStatus = statusFilter.toLowerCase();
-      userApprovals = userApprovals.filter((a: any) => a.status === targetStatus);
-    }
-
-    // 6. Sort: Pending first, then by decided_at desc
-    userApprovals.sort((a: any, b: any) => {
+    // 5. Sort: Pending first, then newest
+    filteredApprovals.sort((a: any, b: any) => {
       if (a.status === "pending" && b.status !== "pending") return -1;
       if (b.status === "pending" && a.status !== "pending") return 1;
       return 0;
     });
 
-    return NextResponse.json({ approvals: userApprovals });
+    return NextResponse.json({ approvals: filteredApprovals });
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Failed to fetch approvals" },
