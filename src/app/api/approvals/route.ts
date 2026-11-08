@@ -27,19 +27,6 @@ export async function GET(request: NextRequest) {
 
     const userMandateIds = (userMandates || []).map((m) => m.id);
 
-    if (userMandateIds.length > 0) {
-      const activeMandateId = userMandateIds[0];
-
-      // Re-link any recent keyboard payment request if it was assigned to a demo mandate
-      try {
-        await supabase
-          .from("payment_requests")
-          .update({ mandate_id: activeMandateId })
-          .ilike("item", "%Keyboard%")
-          .neq("mandate_id", activeMandateId);
-      } catch {}
-    }
-
     // 2. Fetch directly from payment_requests under user's mandates with decisions and approvals
     // This is the source of truth that never fails even if approvals table schema has differences!
     let allApprovals: any[] = [];
