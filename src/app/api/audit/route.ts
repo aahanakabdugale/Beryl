@@ -86,17 +86,6 @@ export async function GET(request: NextRequest) {
     );
     const userMandateIds = Array.from(userMandateMap.keys());
 
-    // Re-link any recent phone stand purchase to current user's active mandate
-    if (userMandateIds.length > 0) {
-      try {
-        await supabase
-          .from("payment_requests")
-          .update({ mandate_id: userMandateIds[0] })
-          .ilike("item", "%Phone Stand%")
-          .neq("mandate_id", userMandateIds[0]);
-      } catch {}
-    }
-
     // If user owns no mandates yet, return empty dataset
     if (userMandateIds.length === 0) {
       const emptySummary: AuditSummary = {
