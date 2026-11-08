@@ -38,40 +38,24 @@ The AI agent never accesses payment credentials, credit card tokens, or checkout
 ## 3. Architecture & Execution Flow
 
 ```mermaid
-flowchart TD
-    subgraph AgentZone ["Untrusted Agent Boundary"]
-        User["User Shopping Intent"]
-        Agent["Autonomous Shopper<br/>Groq Llama 3.3 70B &bull; Vercel AI SDK"]
-        Catalog[("Channel3 Product Catalog<br/>Verified Pricing & Metadata")]
-        User --> Agent
-        Catalog -.->|"search_catalog"| Agent
-    end
+flowchart LR
+    Goal["User Goal"] --> Agent["Autonomous Shopper<br/>(Groq Llama 3.3)"]
+    Agent -->|"request_payment<br/>(Air-Gapped)"| Guard["BERYL Policy Engine<br/>evaluate(mandate)"]
 
-    Agent -->|"request_payment payload<br/>Strict Air-Gap Boundary"| GuardAPI["BERYL Guard Service<br/>/api/guard/evaluate"]
+    Guard -->|"APPROVE"| PayPal["PayPal Sandbox<br/>Automated Capture"]
+    Guard -->|"NEEDS_APPROVAL"| Review["Human Review<br/>Authorization Queue"]
+    Guard -->|"BLOCK"| Block["Security Block<br/>Immutable Audit Log"]
 
-    subgraph PolicyZone ["BERYL Deterministic Policy Boundary"]
-        GuardAPI --> Engine{"Pure Policy Engine<br/>evaluate(mandate, request, history)"}
-        Mandates[("Active User Mandate<br/>Budget &bull; Allowlist &bull; Threshold")] -.-> Engine
-    end
+    classDef default fill:#f8fafc,stroke:#cbd5e1,stroke-width:1.2px,color:#0f172a;
+    classDef core fill:#ecfdf5,stroke:#059669,stroke-width:1.5px,color:#065f46;
+    classDef approve fill:#f0fdf4,stroke:#16a34a,stroke-width:1.2px,color:#15803d;
+    classDef review fill:#fffbeb,stroke:#d97706,stroke-width:1.2px,color:#b45309;
+    classDef block fill:#fef2f2,stroke:#dc2626,stroke-width:1.2px,color:#b91c1c;
 
-    Engine -->|"APPROVE<br/>Compliant & under threshold"| PayPal["PayPal Sandbox Execution<br/>Automated Capture & Idempotency"]
-    Engine -->|"NEEDS_APPROVAL<br/>Exceeds approval threshold"| Review["Human-in-the-Loop Queue<br/>Interactive Review Sheet"]
-    Engine -->|"BLOCK<br/>Policy breach / Injection"| Block["Security Termination<br/>Immutable Audit Log Entry"]
-
-    Review -->|"User Approves"| PayPal
-    Review -->|"User Declines"| Block
-
-    classDef approve fill:#e6f9f0,stroke:#0b7a5a,stroke-width:1.5px,color:#064e3b;
-    classDef review fill:#fef9e7,stroke:#d97706,stroke-width:1.5px,color:#92400e;
-    classDef block fill:#fdf2f2,stroke:#dc2626,stroke-width:1.5px,color:#991b1b;
-    classDef core fill:#f0fdf4,stroke:#16a34a,stroke-width:1.5px,color:#14532d;
-    classDef agent fill:#f8fafc,stroke:#64748b,stroke-width:1.5px,color:#1e293b;
-
+    class Guard core;
     class PayPal approve;
     class Review review;
     class Block block;
-    class Engine,GuardAPI core;
-    class Agent,User agent;
 ```
 
 ---
