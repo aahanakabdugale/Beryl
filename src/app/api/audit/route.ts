@@ -266,7 +266,8 @@ export async function GET(request: NextRequest) {
     const isAsc = filters.sort_order === "asc";
     query = query.order(filters.sort_by, { ascending: isAsc });
 
-    let { data: rawRequests, error: fetchErr } = await query;
+    const { data: initialRequests, error: fetchErr } = await query;
+    let rawRequests: any[] = initialRequests || [];
 
     if (fetchErr) {
       console.warn("Retrying audit query with fallback fields due to:", fetchErr.message);
@@ -288,7 +289,7 @@ export async function GET(request: NextRequest) {
         .in("mandate_id", userMandateIds)
         .order("created_at", { ascending: false });
       const fallbackRes = await fallbackQuery;
-      rawRequests = fallbackRes.data || [];
+      rawRequests = (fallbackRes.data as any[]) || [];
     }
 
     // 6. Enrich and Format Records for AG Grid

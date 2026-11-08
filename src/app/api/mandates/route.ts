@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Query requests with relational joins
-      const { data: requests, error: reqErr } = await supabase
+      const { data: requests } = await supabase
         .from("payment_requests")
         .select(`
           id,
@@ -119,8 +119,9 @@ export async function GET(request: NextRequest) {
         `)
         .in("mandate_id", mandateIds);
 
-      if (requests && requests.length > 0) {
-        for (const req of requests) {
+      const reqList: any[] = (requests as any[]) || [];
+      if (reqList.length > 0) {
+        for (const req of reqList) {
           const decList = Array.isArray(req.decisions)
             ? req.decisions
             : req.decisions
