@@ -63,6 +63,7 @@ export function ConsumerShell({
   const [userEmail, setUserEmail] = useState("");
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [internalPendingCount, setInternalPendingCount] = useState<number>(0);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -161,15 +162,32 @@ export function ConsumerShell({
   }, []);
 
   const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    setAccountMenuOpen(false);
+
     try {
       const supabase = createClient();
       await supabase.auth.signOut();
-      document.cookie = "beryl_demo_mode=; path=/; max-age=0";
-      toast.success("Signed out");
-      router.push("/login");
-    } catch {
-      router.push("/login");
-    }
+    } catch {}
+
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+    } catch {}
+
+    // Purge role cookies and local storage auth caches
+    document.cookie = "beryl_demo_mode=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "beryl_dev_authenticated=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+    try {
+      localStorage.removeItem("beryl_active_mandate_cache");
+      localStorage.removeItem("beryl_user_profile");
+    } catch {}
+
+    toast.success("Signed out successfully");
+
+    // Full window navigation directly to Landing Page (/)
+    window.location.href = "/";
   };
 
   const pendingBadge = propPendingCount !== undefined ? propPendingCount : internalPendingCount;
@@ -358,10 +376,11 @@ export function ConsumerShell({
 
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[12px] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                    disabled={isSigningOut}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[12px] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    <LogOut className="h-3.5 w-3.5" />
-                    <span>Sign Out</span>
+                    <LogOut className={`h-3.5 w-3.5 ${isSigningOut ? "animate-spin" : ""}`} />
+                    <span>{isSigningOut ? "Signing Out..." : "Sign Out"}</span>
                   </button>
                 </div>
               )}
@@ -497,10 +516,11 @@ export function ConsumerShell({
 
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[12px] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                    disabled={isSigningOut}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-[12px] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    <LogOut className="h-3.5 w-3.5" />
-                    <span>Sign Out</span>
+                    <LogOut className={`h-3.5 w-3.5 ${isSigningOut ? "animate-spin" : ""}`} />
+                    <span>{isSigningOut ? "Signing Out..." : "Sign Out"}</span>
                   </button>
                 </div>
               )}
