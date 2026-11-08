@@ -37,33 +37,41 @@ The AI agent never accesses payment credentials, credit card tokens, or checkout
 
 ## 3. Architecture & Execution Flow
 
-```
-[ User Prompt / Shopping Goal ]
-             |
-             v
-+---------------------------+
-|    Autonomous Shopper     |  (Groq Llama 3.3 70B + Vercel AI SDK)
-| (Air-Gapped: No Secrets)  |  - Tools: search_catalog, request_payment
-+---------------------------+
-             |
-             | Tool Call: request_payment({ item, amount_cents, merchant })
-             v
-+---------------------------+
-|    BERYL Guard Service    |  (/api/guard/evaluate)
-+---------------------------+
-             |
-             v
-+---------------------------+
-| Deterministic Policy Core |  Pure function: evaluate(Mandate, Request, History)
-+---------------------------+
-   |            |            |
-   | APPROVE    | REVIEW     | BLOCK
-   v            v            v
-+----------+ +-----------+ +----------+
-|  PayPal  | |  Human    | | Rejected |
-| Sandbox  | | Approval  | | (Audit   |
-| Capture  | |  Queue    | |  Logged) |
-+----------+ +-----------+ +----------+
+```mermaid
+flowchart TD
+    subgraph AgentZone ["Untrusted Agent Boundary"]
+        User["User Shopping Intent"]
+        Agent["Autonomous Shopper<br/>Groq Llama 3.3 70B &bull; Vercel AI SDK"]
+        Catalog[("Channel3 Product Catalog<br/>Verified Pricing & Metadata")]
+        User --> Agent
+        Catalog -.->|"search_catalog"| Agent
+    end
+
+    Agent -->|"request_payment payload<br/>Strict Air-Gap Boundary"| GuardAPI["BERYL Guard Service<br/>/api/guard/evaluate"]
+
+    subgraph PolicyZone ["BERYL Deterministic Policy Boundary"]
+        GuardAPI --> Engine{"Pure Policy Engine<br/>evaluate(mandate, request, history)"}
+        Mandates[("Active User Mandate<br/>Budget &bull; Allowlist &bull; Threshold")] -.-> Engine
+    end
+
+    Engine -->|"APPROVE<br/>Compliant & under threshold"| PayPal["PayPal Sandbox Execution<br/>Automated Capture & Idempotency"]
+    Engine -->|"NEEDS_APPROVAL<br/>Exceeds approval threshold"| Review["Human-in-the-Loop Queue<br/>Interactive Review Sheet"]
+    Engine -->|"BLOCK<br/>Policy breach / Injection"| Block["Security Termination<br/>Immutable Audit Log Entry"]
+
+    Review -->|"User Approves"| PayPal
+    Review -->|"User Declines"| Block
+
+    classDef approve fill:#e6f9f0,stroke:#0b7a5a,stroke-width:1.5px,color:#064e3b;
+    classDef review fill:#fef9e7,stroke:#d97706,stroke-width:1.5px,color:#92400e;
+    classDef block fill:#fdf2f2,stroke:#dc2626,stroke-width:1.5px,color:#991b1b;
+    classDef core fill:#f0fdf4,stroke:#16a34a,stroke-width:1.5px,color:#14532d;
+    classDef agent fill:#f8fafc,stroke:#64748b,stroke-width:1.5px,color:#1e293b;
+
+    class PayPal approve;
+    class Review review;
+    class Block block;
+    class Engine,GuardAPI core;
+    class Agent,User agent;
 ```
 
 ---
