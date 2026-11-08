@@ -40,6 +40,22 @@ export async function GET(request: NextRequest) {
 
     // Auto-provision a default active mandate if new user has none
     if (!mandates || mandates.length === 0) {
+      // Ensure user profile exists for foreign key constraint
+      try {
+        await supabase.from("profiles").upsert(
+          {
+            id: user.id,
+            email: user.email || "",
+            created_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
+      } catch (profErr) {
+        console.warn("Could not upsert profile on auto-provision:", profErr);
+      }
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
       const defaultMandate = {
         user_id: user.id,
         name: "My Shopping Allowance",
@@ -50,14 +66,18 @@ export async function GET(request: NextRequest) {
         allowed_merchants: ["amazon.com", "bestbuy.com", "target.com", "trychannel3.com"],
         blocked_merchants: ["shadydeals.xyz", "giftcardhub.net"],
         status: "active",
+        expires_at: expiresAt.toISOString(),
         created_at: new Date().toISOString(),
       };
-      const { data: createdMandate } = await supabase
+      const { data: createdMandate, error: insertError } = await supabase
         .from("mandates")
         .insert(defaultMandate)
         .select()
         .single();
-      if (createdMandate) {
+
+      if (insertError) {
+        console.error("Auto-provision mandate error:", insertError.message);
+      } else if (createdMandate) {
         mandates = [createdMandate];
       }
     }
@@ -116,11 +136,17 @@ export async function GET(request: NextRequest) {
       const isExpired =
         m.expires_at && new Date(m.expires_at).getTime() < Date.now();
 
+      const threshold = m.approval_threshold_cents ?? m.ask_above_cents ?? 0;
+      const isFrozen = m.status === "frozen" || Boolean(m.is_frozen);
       return {
         ...m,
         spent_cents: spentCents,
         remaining_budget_cents: remainingCents,
-        effective_status: isExpired ? "expired" : m.status,
+        approval_threshold_cents: threshold,
+        ask_above_cents: threshold,
+        is_frozen: isFrozen,
+        status: isFrozen ? "frozen" : (isExpired ? "expired" : "active"),
+        effective_status: isExpired ? "expired" : (isFrozen ? "frozen" : "active"),
       };
     });
 
@@ -149,6 +175,9 @@ export async function POST(request: NextRequest) {
     if (body.ask_above_cents !== undefined && body.approval_threshold_cents === undefined) {
       body.approval_threshold_cents = body.ask_above_cents;
     }
+    if (body.approval_threshold_cents !== undefined && body.ask_above_cents === undefined) {
+      body.ask_above_cents = body.approval_threshold_cents;
+    }
     if (!body.blocked_merchants) {
       body.blocked_merchants = [];
     }
@@ -168,9 +197,32 @@ export async function POST(request: NextRequest) {
     const validatedData = parseResult.data;
     const supabase = createAdminClient();
 
+    // Ensure user profile exists for foreign key constraint
+    try {
+      await supabase.from("profiles").upsert(
+        {
+          id: user.id,
+          email: user.email || "",
+          created_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+    } catch (profErr) {
+      console.warn("Could not upsert profile on mandate creation:", profErr);
+    }
+
+    // Exact columns for public.mandates table in Supabase
     const newMandate = {
-      ...validatedData,
       user_id: user.id,
+      name: validatedData.name,
+      total_budget_cents: validatedData.total_budget_cents,
+      per_purchase_limit_cents: validatedData.per_purchase_limit_cents,
+      approval_threshold_cents: validatedData.approval_threshold_cents,
+      allowed_categories: validatedData.allowed_categories ?? [],
+      allowed_merchants: validatedData.allowed_merchants ?? [],
+      blocked_merchants: validatedData.blocked_merchants ?? [],
+      expires_at: validatedData.expires_at ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: validatedData.status || "active",
       created_at: new Date().toISOString(),
     };
 
@@ -181,6 +233,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      console.error("Failed to insert mandate:", error);
       return NextResponse.json(
         { error: `Failed to insert mandate: ${error.message}` },
         { status: 500 }
