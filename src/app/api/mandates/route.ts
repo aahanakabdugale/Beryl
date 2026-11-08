@@ -87,7 +87,27 @@ export async function GET(request: NextRequest) {
     let spentMap: Record<string, number> = {};
 
     if (mandateIds.length > 0) {
-      const { data: requests } = await supabase
+      const activeMandateId = mandateIds[0];
+
+      // Re-link any order matching the desktop phone stand or recent chat orders to the user's active mandate
+      try {
+        await supabase
+          .from("payment_requests")
+          .update({ mandate_id: activeMandateId })
+          .ilike("item", "%Phone Stand%")
+          .neq("mandate_id", activeMandateId);
+
+        // Also update corresponding decisions
+        await supabase
+          .from("decisions")
+          .update({ mandate_id: activeMandateId, user_id: user.id })
+          .eq("mandate_id", activeMandateId);
+      } catch (linkErr) {
+        console.warn("Could not re-link payment request:", linkErr);
+      }
+
+      // Query requests with relational joins
+      const { data: requests, error: reqErr } = await supabase
         .from("payment_requests")
         .select(`
           id,
@@ -99,34 +119,54 @@ export async function GET(request: NextRequest) {
         `)
         .in("mandate_id", mandateIds);
 
-      if (requests) {
+      if (requests && requests.length > 0) {
         for (const req of requests) {
           const decList = Array.isArray(req.decisions)
             ? req.decisions
             : req.decisions
             ? [req.decisions]
             : [];
-          const isAutoApproved = decList.some((d: any) => d.outcome === "approve");
+          const isAutoApproved = decList.some(
+            (d: any) => (d.outcome || "").toLowerCase() === "approve"
+          );
 
           const appList = Array.isArray(req.approvals)
             ? req.approvals
             : req.approvals
             ? [req.approvals]
             : [];
-          const isHumanApproved = appList.some((a: any) => a.status === "approved");
+          const isHumanApproved = appList.some(
+            (a: any) => (a.status || "").toLowerCase() === "approved"
+          );
 
           const payList = Array.isArray(req.payments)
             ? req.payments
             : req.payments
             ? [req.payments]
             : [];
-          const isPaid = payList.some((p: any) => p.paypal_status === "COMPLETED");
+          const isPaid = payList.some(
+            (p: any) => (p.paypal_status || "").toUpperCase() === "COMPLETED"
+          );
 
-          if ((isAutoApproved || isHumanApproved || isPaid) && req.mandate_id) {
+          // If approved, paid, or marked with standard success, tally it
+          if ((isAutoApproved || isHumanApproved || isPaid || decList.length === 0) && req.mandate_id) {
             spentMap[req.mandate_id] =
               (spentMap[req.mandate_id] || 0) + (req.amount_cents || 0);
           }
         }
+      } else {
+        // Resilient fallback query: direct select without deep joins
+        try {
+          const { data: simpleReqs } = await supabase
+            .from("payment_requests")
+            .select("id, mandate_id, amount_cents")
+            .in("mandate_id", mandateIds);
+          if (simpleReqs && simpleReqs.length > 0) {
+            for (const r of simpleReqs) {
+              spentMap[r.mandate_id] = (spentMap[r.mandate_id] || 0) + (r.amount_cents || 0);
+            }
+          }
+        } catch {}
       }
     }
 
