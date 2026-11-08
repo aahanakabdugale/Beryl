@@ -38,13 +38,15 @@ export default function AnalyticsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      let mandateSpent = 0;
       // Fetch mandates
       const resMandates = await fetch("/api/mandates");
       if (resMandates.ok) {
         const data = await resMandates.json();
         const active = data.mandates?.[0];
         if (active) {
-          setSpentCents(typeof active.spent_cents === "number" ? active.spent_cents : 0);
+          mandateSpent = typeof active.spent_cents === "number" ? active.spent_cents : 0;
+          setSpentCents(mandateSpent);
           setTotalBudgetCents(active.total_budget_cents || 15000);
         }
       }
@@ -59,18 +61,27 @@ export default function AnalyticsPage() {
           let needs = 0;
           let blk = 0;
           let prevented = 0;
+          let logSpent = 0;
           const catMap: Record<string, number> = {};
 
           logs.forEach((l) => {
-            const dec = (l.decision || "").toUpperCase();
-            if (dec === "APPROVE") {
+            const dec = (l.decision || l.outcome || l.final_outcome || "").toUpperCase();
+            const isApproved =
+              dec === "APPROVE" ||
+              dec === "APPROVED" ||
+              dec === "COMPLETED" ||
+              l.final_outcome === "COMPLETED" ||
+              l.final_outcome === "APPROVED";
+
+            if (isApproved) {
               app++;
               const cat = l.category || "General";
               const normCat = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
               catMap[normCat] = (catMap[normCat] || 0) + (l.amount_cents || 0);
-            } else if (dec === "NEEDS_APPROVAL") {
+              logSpent += (l.amount_cents || 0);
+            } else if (dec === "NEEDS_APPROVAL" || dec === "PENDING" || dec === "PENDING_APPROVAL") {
               needs++;
-            } else if (dec === "BLOCK") {
+            } else if (dec === "BLOCK" || dec === "BLOCKED" || dec === "REJECTED") {
               blk++;
               prevented += l.amount_cents || 0;
             }
@@ -82,6 +93,9 @@ export default function AnalyticsPage() {
             blocked: blk,
             preventedCents: prevented,
           });
+
+          // Sync spentCents to the larger of mandate spent or verified log spent
+          setSpentCents(Math.max(mandateSpent, logSpent));
 
           const dynCat = Object.entries(catMap).map(([category, cents]) => ({
             category,
