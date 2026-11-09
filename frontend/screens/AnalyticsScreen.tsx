@@ -41,6 +41,11 @@ export default function AnalyticsPage() {
       let mandateSpent = 0;
       // Fetch mandates
       const resMandates = await fetch("/api/mandates");
+      if (resMandates.status === 401) {
+        toast.error("Please sign in to view analytics");
+        window.location.href = "/login?redirectTo=/dashboard/analytics";
+        return;
+      }
       if (resMandates.ok) {
         const data = await resMandates.json();
         const active = data.mandates?.[0];
