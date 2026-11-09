@@ -35,9 +35,18 @@ export async function POST(request: NextRequest) {
       message: "Developer privileges unlocked.",
     });
 
-    // Set cookie valid for 24 hours
+    // Set developer authentication cookie valid for 24 hours
     response.cookies.set({
       name: "beryl_dev_authenticated",
+      value: "true",
+      path: "/",
+      maxAge: 60 * 60 * 24, // 24 hours
+      sameSite: "lax",
+    });
+
+    // Also set demo mode cookie for unified developer lab access
+    response.cookies.set({
+      name: "beryl_demo_mode",
       value: "true",
       path: "/",
       maxAge: 60 * 60 * 24, // 24 hours
