@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 export default function AnalyticsPage() {
-  const { isDeveloper } = useViewMode();
+  const { isDeveloper, requestDeveloperMode } = useViewMode();
   const [loading, setLoading] = useState(true);
   const [spentCents, setSpentCents] = useState(0);
   const [totalBudgetCents, setTotalBudgetCents] = useState(15000); // $150.00
@@ -42,8 +42,9 @@ export default function AnalyticsPage() {
       // Fetch mandates
       const resMandates = await fetch("/api/mandates");
       if (resMandates.status === 401) {
-        toast.error("Please sign in to view analytics");
-        window.location.href = "/login?redirectTo=/dashboard/analytics";
+        requestDeveloperMode(() => {
+          fetchData();
+        });
         return;
       }
       if (resMandates.ok) {
