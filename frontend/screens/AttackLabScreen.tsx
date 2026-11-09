@@ -90,7 +90,7 @@ const ATTACK_VECTORS: AttackVectorOption[] = [
 ];
 
 export default function AttackLabPage() {
-  const { isDeveloper, setViewMode } = useViewMode();
+  const { isDeveloper, setViewMode, requestDeveloperMode } = useViewMode();
   const { inspectData } = useInspector();
 
   const [selectedVectorId, setSelectedVectorId] = useState<string>("prompt_injection");
@@ -172,8 +172,9 @@ export default function AttackLabPage() {
       });
 
       if (res.status === 401) {
-        if (showToast) toast.error("Please sign in to execute security runs");
-        window.location.href = "/login?redirectTo=/dashboard/attack-lab";
+        requestDeveloperMode(() => {
+          handleRunAllScenarios(showToast);
+        });
         return;
       }
 
