@@ -38,6 +38,56 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Auto-provision or adopt existing mandate if user has none so Developer Lab is ready
+    if (!mandates || mandates.length === 0) {
+      const { data: existingAll } = await supabase
+        .from("mandates")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (existingAll && existingAll.length > 0) {
+        mandates = existingAll;
+      } else {
+        try {
+          await supabase.from("profiles").upsert(
+            {
+              id: user.id,
+              email: user.email || "demo@beryl.dev",
+              created_at: new Date().toISOString(),
+            },
+            { onConflict: "id" }
+          );
+        } catch {}
+
+        const inOneMonth = new Date();
+        inOneMonth.setDate(inOneMonth.getDate() + 30);
+        const defaultMandate = {
+          user_id: user.id,
+          name: "Desk & Electronics Setup",
+          total_budget_cents: 15000, // $150.00
+          per_purchase_limit_cents: 5000, // $50.00
+          approval_threshold_cents: 3500, // $35.00
+          allowed_categories: ["electronics", "office supplies", "accessories"],
+          allowed_merchants: ["amazon.com", "bestbuy.com", "trychannel3.com"],
+          blocked_merchants: ["shadydeals.xyz", "giftcardhub.net"],
+          status: "active",
+          expires_at: inOneMonth.toISOString(),
+          created_at: new Date().toISOString(),
+        };
+
+        const { data: createdMandate } = await supabase
+          .from("mandates")
+          .insert(defaultMandate)
+          .select()
+          .single();
+
+        if (createdMandate) {
+          mandates = [createdMandate];
+        }
+      }
+    }
+
     const mandateList = mandates || [];
 
     // For each mandate, calculate spent amount from completed/approved payments
