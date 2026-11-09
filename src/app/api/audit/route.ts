@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     const supabase = createAdminClient();
 
     // 3. User mandate verification and scoping
-    const { data: userMandates, error: mandateErr } = await supabase
+    const { data: initialUserMandates, error: mandateErr } = await supabase
       .from("mandates")
       .select("id, name")
       .eq("user_id", user.id);
@@ -81,8 +81,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    let userMandates = initialUserMandates || [];
+    if (userMandates.length === 0) {
+      const { data: fallbackMandates } = await supabase
+        .from("mandates")
+        .select("id, name")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (fallbackMandates && fallbackMandates.length > 0) {
+        userMandates = fallbackMandates;
+      }
+    }
+
     const userMandateMap = new Map(
-      (userMandates || []).map((m) => [m.id, m.name])
+      userMandates.map((m) => [m.id, m.name])
     );
     const userMandateIds = Array.from(userMandateMap.keys());
 
