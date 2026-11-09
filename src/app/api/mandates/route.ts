@@ -38,52 +38,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Auto-provision a default active mandate if new user has none
-    if (!mandates || mandates.length === 0) {
-      // Ensure user profile exists for foreign key constraint
-      try {
-        await supabase.from("profiles").upsert(
-          {
-            id: user.id,
-            email: user.email || "",
-            created_at: new Date().toISOString(),
-          },
-          { onConflict: "id" }
-        );
-      } catch (profErr) {
-        console.warn("Could not upsert profile on auto-provision:", profErr);
-      }
-
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30);
-      const defaultMandate = {
-        user_id: user.id,
-        name: "My Shopping Allowance",
-        total_budget_cents: 10000, // $100.00
-        per_purchase_limit_cents: 5000, // $50.00
-        approval_threshold_cents: 3500, // $35.00
-        allowed_categories: ["electronics", "office supplies", "accessories", "books"],
-        allowed_merchants: ["amazon.com", "bestbuy.com", "target.com", "trychannel3.com"],
-        blocked_merchants: ["shadydeals.xyz", "giftcardhub.net"],
-        status: "active",
-        expires_at: expiresAt.toISOString(),
-        created_at: new Date().toISOString(),
-      };
-      const { data: createdMandate, error: insertError } = await supabase
-        .from("mandates")
-        .insert(defaultMandate)
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error("Auto-provision mandate error:", insertError.message);
-      } else if (createdMandate) {
-        mandates = [createdMandate];
-      }
-    }
+    const mandateList = mandates || [];
 
     // For each mandate, calculate spent amount from completed/approved payments
-    const mandateIds = (mandates || []).map((m) => m.id);
+    const mandateIds = mandateList.map((m) => m.id);
     let spentMap: Record<string, number> = {};
 
     if (mandateIds.length > 0) {
