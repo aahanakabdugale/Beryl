@@ -171,6 +171,12 @@ export default function AttackLabPage() {
         body: JSON.stringify({}),
       });
 
+      if (res.status === 401) {
+        if (showToast) toast.error("Please sign in to execute security runs");
+        window.location.href = "/login?redirectTo=/dashboard/attack-lab";
+        return;
+      }
+
       if (res.ok) {
         const data = await res.json();
         setScoreboard(data.scoreboard);
