@@ -51,7 +51,7 @@ interface ApprovalItem {
 }
 
 export default function ApprovalsPage() {
-  const { isDeveloper } = useViewMode();
+  const { isDeveloper, requestDeveloperMode } = useViewMode();
   const { inspectData } = useInspector();
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,8 +66,9 @@ export default function ApprovalsPage() {
     try {
       const res = await fetch("/api/approvals?status=all");
       if (res.status === 401) {
-        toast.error("Please sign in to view order reviews");
-        window.location.href = "/login?redirectTo=/dashboard/approvals";
+        requestDeveloperMode(() => {
+          fetchApprovals();
+        });
         return;
       }
       if (res.ok) {
