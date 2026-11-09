@@ -70,6 +70,12 @@ export default function DashboardOverview() {
         fetch("/api/audit?limit=10"),
       ]);
 
+      if (resMandates.status === 401 || resAudit.status === 401) {
+        toast.error("Please sign in to view your dashboard");
+        window.location.href = "/login?redirectTo=/dashboard";
+        return;
+      }
+
       if (resMandates.ok) {
         const data = await resMandates.json();
         const list: Mandate[] = data.mandates || [];
@@ -77,6 +83,11 @@ export default function DashboardOverview() {
           setActiveMandate(list[0]);
           try {
             localStorage.setItem("beryl_active_mandate_cache", JSON.stringify(list[0]));
+          } catch {}
+        } else {
+          setActiveMandate(null);
+          try {
+            localStorage.removeItem("beryl_active_mandate_cache");
           } catch {}
         }
       }
@@ -190,31 +201,41 @@ export default function DashboardOverview() {
       <div className="bg-white dark:bg-[#0A1612] border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 sm:p-6 shadow-xs space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            {activeMandate ? (
+            {loading ? (
+              <div className="h-6 w-56 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+            ) : activeMandate ? (
               <div className="font-bold text-base sm:text-lg">
                 {activeMandate.name}
               </div>
             ) : (
-              <div className="h-6 w-56 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+              <div className="font-bold text-base sm:text-lg text-zinc-500">
+                No Policy Mandate Active
+              </div>
             )}
-            {activeMandate ? (
+            {loading ? (
+              <div className="h-4 w-72 bg-zinc-100 dark:bg-zinc-800/60 rounded mt-1.5 animate-pulse" />
+            ) : activeMandate ? (
               <div className="text-xs text-zinc-400 mt-0.5">
                 Scope: {(activeMandate.allowed_categories || []).join(", ") || "All categories"}
               </div>
             ) : (
-              <div className="h-4 w-72 bg-zinc-100 dark:bg-zinc-800/60 rounded mt-1.5 animate-pulse" />
+              <div className="text-xs text-zinc-400 mt-0.5">
+                Create a policy mandate to set spending caps, allowed merchants, and approvals.
+              </div>
             )}
           </div>
 
           <div className="flex items-center gap-3">
             <div className="text-xs font-mono font-medium text-zinc-500">
               Status:{" "}
-              {activeMandate ? (
+              {loading ? (
+                <span className="text-zinc-400">LOADING...</span>
+              ) : activeMandate ? (
                 <span className={`font-bold ${activeMandate.is_frozen ? "text-rose-600 dark:text-rose-400" : "text-[#0B7A5A] dark:text-[#3EE0A8]"}`}>
                   {activeMandate.is_frozen ? "FROZEN" : "OPERATIONAL"}
                 </span>
               ) : (
-                <span className="text-zinc-400">LOADING...</span>
+                <span className="text-amber-500 font-bold">UNCONFIGURED</span>
               )}
             </div>
             <button
@@ -222,7 +243,9 @@ export default function DashboardOverview() {
               onClick={handleToggleFreeze}
               disabled={freezeLoading || !activeMandate}
               className={`px-3 py-1.5 rounded font-mono text-xs font-semibold uppercase transition-colors cursor-pointer ${
-                activeMandate?.is_frozen
+                !activeMandate
+                  ? "opacity-40 cursor-not-allowed border border-zinc-300 dark:border-zinc-800 text-zinc-400"
+                  : activeMandate?.is_frozen
                   ? "bg-rose-600 hover:bg-rose-700 text-white"
                   : "border border-rose-300 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white bg-rose-50/40 dark:bg-rose-950/20"
               }`}
@@ -240,7 +263,9 @@ export default function DashboardOverview() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-3 border-t border-zinc-100 dark:border-zinc-800/80">
           <div>
             <div className="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Budget Remaining</div>
-            {activeMandate ? (
+            {loading ? (
+              <div className="h-9 w-40 bg-zinc-100 dark:bg-zinc-800 rounded mt-1.5 animate-pulse" />
+            ) : activeMandate ? (
               <div className="text-3xl font-extrabold mt-1.5 text-[#0B7A5A] dark:text-[#3EE0A8]">
                 ${(remainingCents / 100).toFixed(2)}
                 <span className="text-sm font-normal text-zinc-400 ml-2">
@@ -248,7 +273,9 @@ export default function DashboardOverview() {
                 </span>
               </div>
             ) : (
-              <div className="h-9 w-40 bg-zinc-100 dark:bg-zinc-800 rounded mt-1.5 animate-pulse" />
+              <div className="text-3xl font-extrabold mt-1.5 text-zinc-400">
+                $0.00
+              </div>
             )}
             <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden mt-3">
               <div
@@ -260,23 +287,31 @@ export default function DashboardOverview() {
 
           <div>
             <div className="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Single Purchase Cap</div>
-            {activeMandate ? (
+            {loading ? (
+              <div className="h-9 w-24 bg-zinc-100 dark:bg-zinc-800 rounded mt-1.5 animate-pulse" />
+            ) : activeMandate ? (
               <div className="text-3xl font-extrabold mt-1.5">
                 ${((activeMandate.per_purchase_limit_cents ?? 0) / 100).toFixed(2)}
               </div>
             ) : (
-              <div className="h-9 w-24 bg-zinc-100 dark:bg-zinc-800 rounded mt-1.5 animate-pulse" />
+              <div className="text-3xl font-extrabold mt-1.5 text-zinc-400">
+                $0.00
+              </div>
             )}
           </div>
 
           <div>
             <div className="text-xs uppercase tracking-wider text-zinc-500 font-semibold">Approval Threshold</div>
-            {activeMandate ? (
+            {loading ? (
+              <div className="h-9 w-24 bg-zinc-100 dark:bg-zinc-800 rounded mt-1.5 animate-pulse" />
+            ) : activeMandate ? (
               <div className="text-3xl font-extrabold mt-1.5 text-amber-600 dark:text-amber-400">
                 ${(((activeMandate.ask_above_cents ?? activeMandate.approval_threshold_cents) ?? 0) / 100).toFixed(2)}
               </div>
             ) : (
-              <div className="h-9 w-24 bg-zinc-100 dark:bg-zinc-800 rounded mt-1.5 animate-pulse" />
+              <div className="text-3xl font-extrabold mt-1.5 text-zinc-400">
+                $0.00
+              </div>
             )}
           </div>
         </div>
