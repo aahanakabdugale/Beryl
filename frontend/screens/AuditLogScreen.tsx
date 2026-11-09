@@ -52,7 +52,7 @@ interface AuditRow {
 }
 
 export default function AuditLogPage() {
-  const { isDeveloper, setViewMode } = useViewMode();
+  const { isDeveloper, setViewMode, requestDeveloperMode } = useViewMode();
   const { inspectData } = useInspector();
   const { resolvedTheme } = useTheme();
   const [rowData, setRowData] = useState<AuditRow[]>([]);
@@ -94,8 +94,9 @@ export default function AuditLogPage() {
     try {
       const res = await fetch("/api/audit");
       if (res.status === 401) {
-        toast.error("Please sign in to view audit logs");
-        window.location.href = "/login?redirectTo=/dashboard/audit";
+        requestDeveloperMode(() => {
+          fetchLogs();
+        });
         return;
       }
       if (res.ok) {
