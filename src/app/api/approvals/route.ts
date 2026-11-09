@@ -25,7 +25,16 @@ export async function GET(request: NextRequest) {
       .select("id, user_id, name, total_budget_cents, approval_threshold_cents")
       .eq("user_id", user.id);
 
-    const userMandateIds = (userMandates || []).map((m) => m.id);
+    let userMandateIds = (userMandates || []).map((m) => m.id);
+
+    if (userMandateIds.length === 0) {
+      const { data: fallbackMandates } = await supabase
+        .from("mandates")
+        .select("id")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      userMandateIds = (fallbackMandates || []).map((m) => m.id);
+    }
 
     if (userMandateIds.length === 0) {
       return NextResponse.json({ approvals: [] });
