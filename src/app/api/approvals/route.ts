@@ -27,40 +27,8 @@ export async function GET(request: NextRequest) {
 
     const userMandateIds = (userMandates || []).map((m) => m.id);
 
-    // Auto-link any recent Keychron keyboard order to active mandate
-    if (userMandateIds.length > 0) {
-      const activeMandateId = userMandateIds[0];
-      try {
-        await supabase
-          .from("payment_requests")
-          .update({ mandate_id: activeMandateId })
-          .ilike("item", "%Keyboard%")
-          .neq("mandate_id", activeMandateId);
-
-        // Ensure approval record exists
-        const { data: kbReqs } = await supabase
-          .from("payment_requests")
-          .select("id")
-          .ilike("item", "%Keyboard%");
-
-        for (const kr of kbReqs || []) {
-          const { data: existingApp } = await supabase
-            .from("approvals")
-            .select("id")
-            .eq("request_id", kr.id)
-            .maybeSingle();
-
-          if (!existingApp) {
-            await supabase.from("approvals").insert({
-              id: kr.id,
-              request_id: kr.id,
-              status: "pending",
-            });
-          }
-        }
-      } catch (linkErr) {
-        console.warn("Keyboard auto-link notice:", linkErr);
-      }
+    if (userMandateIds.length === 0) {
+      return NextResponse.json({ approvals: [] });
     }
 
     // 2. Fetch directly from payment_requests under user's mandates with decisions and approvals
