@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // If user is not authenticated and trying to access a protected dashboard route
-  if (!user && !isDemo && isProtectedPath) {
+  if (!user && isProtectedPath) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("redirectTo", pathname);
@@ -54,7 +54,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // If user is authenticated and visits login/signup, redirect to dashboard
-  if ((user || isDemo) && isAuthPath) {
+  if (user && isAuthPath) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
     redirectUrl.searchParams.delete("redirectTo");
