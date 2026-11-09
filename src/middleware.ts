@@ -45,16 +45,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // If user is not authenticated and trying to access a protected dashboard route
-  if (!user && isProtectedPath) {
+  // If user is not authenticated and not in developer/demo mode, redirect to login
+  if (!user && !isDevAuth && !isDemo && isProtectedPath) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // If user is authenticated and visits login/signup, redirect to dashboard
-  if (user && isAuthPath) {
+  // If user is authenticated or in developer/demo mode and visits login/signup, redirect to dashboard
+  if ((user || isDevAuth || isDemo) && isAuthPath) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
     redirectUrl.searchParams.delete("redirectTo");
