@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useInspector } from "@/components/inspector-context";
+import { useViewMode } from "@/components/view-mode-context";
 import { toast } from "sonner";
 
 interface Mandate {
@@ -33,6 +34,7 @@ interface AuditLog {
 
 export default function DashboardOverview() {
   const { inspectData } = useInspector();
+  const { requestDeveloperMode } = useViewMode();
   const [activeMandate, setActiveMandate] = useState<Mandate | null>(null);
   const [recentLogs, setRecentLogs] = useState<AuditLog[]>([]);
   const [activityFilter, setActivityFilter] = useState<"all" | "approved" | "blocked" | "pending">("all");
@@ -71,8 +73,9 @@ export default function DashboardOverview() {
       ]);
 
       if (resMandates.status === 401 || resAudit.status === 401) {
-        toast.error("Please sign in to view your dashboard");
-        window.location.href = "/login?redirectTo=/dashboard";
+        requestDeveloperMode(() => {
+          fetchDashboardData(true);
+        });
         return;
       }
 
