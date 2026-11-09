@@ -93,6 +93,11 @@ export default function AuditLogPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/audit");
+      if (res.status === 401) {
+        toast.error("Please sign in to view audit logs");
+        window.location.href = "/login?redirectTo=/dashboard/audit";
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         const logs = data.logs || [];
