@@ -65,6 +65,11 @@ export default function ApprovalsPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/approvals?status=all");
+      if (res.status === 401) {
+        toast.error("Please sign in to view order reviews");
+        window.location.href = "/login?redirectTo=/dashboard/approvals";
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         const list: ApprovalItem[] = data.approvals || [];
